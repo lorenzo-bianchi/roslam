@@ -1,6 +1,6 @@
 import numpy as np
 from geometry_msgs.msg import TransformStamped
-from tf_transformations import quaternion_from_euler
+from transforms3d.euler import euler2quat
 from visualization_msgs.msg import Marker, MarkerArray
 
 def broadcast_pose(self):
@@ -20,11 +20,11 @@ def broadcast_pose(self):
     transform.transform.translation.x = float(pose[0])
     transform.transform.translation.y = float(pose[1])
 
-    q = quaternion_from_euler(0, 0, pose[2])
-    transform.transform.rotation.x = q[0]
-    transform.transform.rotation.y = q[1]
-    transform.transform.rotation.z = q[2]
-    transform.transform.rotation.w = q[3]
+    q = euler2quat(0, 0, pose[2])
+    transform.transform.rotation.w = q[0]
+    transform.transform.rotation.x = q[1]
+    transform.transform.rotation.y = q[2]
+    transform.transform.rotation.z = q[3]
 
     # Broadcast transform
     self.tf_broadcaster.sendTransform(transform)
