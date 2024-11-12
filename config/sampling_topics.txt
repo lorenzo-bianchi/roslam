@@ -1,0 +1,15 @@
+/robot1/cmd_vel
+/robot1/ground_truth
+/robot1/joint_states
+/robot1/odom
+/robot1/uwb_tag
+/robot2/cmd_vel
+/robot2/ground_truth
+/robot2/joint_states
+/robot2/odom
+/robot2/uwb_tag
+/robot3/cmd_vel
+/robot3/ground_truth
+/robot3/joint_states
+/robot3/odom
+/robot3/uwb_tag

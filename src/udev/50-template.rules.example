@@ -1,0 +1,4 @@
+# set the udev rule, make the device_port be fixed by ...
+#
+KERNEL=="...*", ATTRS{idVendor}=="...", ATTRS{idProduct}=="...", ATTRS{serial}=="...", MODE:="0777", SYMLINK+="..."
+

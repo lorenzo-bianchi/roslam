@@ -1,0 +1,8 @@
+/robot1/ro_slam_py:
+  ros__parameters:
+    local_frame: robot1/base_footprint
+    odom_frame: robot1/odom
+    robot_color: [1.0, 0.0, 0.0]
+    show_tags_var: false
+    wheel_radius: 0.033
+    wheels_separation: 0.16

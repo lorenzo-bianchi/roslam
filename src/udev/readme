@@ -1,0 +1,4 @@
+- connect usb device
+- run lsusb in order to get idVendor and idProduct
+- run udevadm info -a {port}
+- look for the serial number corresponding to idVendor and idProduct

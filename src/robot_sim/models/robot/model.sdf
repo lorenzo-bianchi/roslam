@@ -1,0 +1,465 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="robot">
+    <link name="{namespace}/base_footprint"/>
+
+    <link name="{namespace}/base_link">
+      <inertial>
+        <pose>0 0 0.070 0 0 0</pose>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>0.7</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.7</iyy>
+          <iyz>0</iyz>
+          <izz>0.6</izz>
+        </inertia>
+      </inertial>
+
+      <!-- <collision name="base_collision">
+        <pose>0 0 0.070 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.140 0.140 0.140</size>
+          </box>
+        </geometry>
+      </collision> -->
+
+      <visual name="base_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://robot/meshes/burger_base.dae</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1.1 1.1 1.1 1</ambient>
+          <diffuse>1.1 1.1 1.1 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    </link>
+
+    <!-- <link name="{namespace}/imu_link">
+      <sensor name="imu" type="imu">
+        <always_on>1</always_on>
+        <update_rate>200</update_rate>
+        <visualize>true</visualize>
+        <topic>{namespace}/imu</topic>
+        <gz_frame_id>{namespace}/imu_link</gz_frame_id>
+        <imu>
+          <angular_velocity>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </link> -->
+
+    <link name="{namespace}/wheel_left_link">
+      <inertial>
+        <pose>0 0.08 0.023 -1.57 0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+
+
+      <collision name="{namespace}/wheel_left_collision">
+        <pose>0 0.08 0.023 -1.57 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.018</length>
+          </cylinder>
+        </geometry>
+        <surface>
+          <!-- This friction pamareter don't contain reliable data!! -->
+          <friction>
+            <ode>
+              <mu>10.0</mu>
+              <mu2>10.0</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+5</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+
+      <visual name="wheel_left_visual">
+        <pose>0 0.08 0.023 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://robot/meshes/tire.dae</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.1 0.1 0.1 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    </link>
+
+    <link name="{namespace}/wheel_right_link">
+      <inertial>
+        <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+
+      <collision name="wheel_right_collision">
+        <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.018</length>
+          </cylinder>
+        </geometry>
+        <surface>
+          <!-- This friction pamareter don't contain reliable data!! -->
+          <friction>
+            <ode>
+              <mu>10.0</mu>
+              <mu2>10.0</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+5</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+
+      <visual name="wheel_right_visual">
+        <pose>0.0 -0.08 0.023 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://robot/meshes/tire.dae</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.1 0.1 0.1 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    </link>
+
+    <link name="{namespace}/dummy_back_link"/>
+    <link name='{namespace}/caster_back_link'>
+      <pose>0.061 0 0 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+      <visual name='caster_back_visual'>
+        <geometry>
+          <sphere>
+            <radius>0.01</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.1 0.1 0.1 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+      <collision name='collision'>
+        <geometry>
+          <sphere>
+            <radius>0.01</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+5</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+
+    <link name="{namespace}/dummy_front_link"/>
+    <link name='{namespace}/caster_front_link'>
+      <pose>-0.061 0 0 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.001</iyy>
+          <iyz>0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+      <visual name='caster_front_visual'>
+        <geometry>
+          <sphere>
+            <radius>0.01</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.1 0.1 0.1 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+      <collision name='collision'>
+        <geometry>
+          <sphere>
+            <radius>0.01</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+5</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+
+    <link name="{namespace}/uwb_link">
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.000166667</ixx>
+          <iyy>0.000166667</iyy>
+          <izz>0.000166667</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <pose>0 0 0.2 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.05 0.08</size>
+          </box>
+        </geometry>
+      </visual>
+      <sensor name="uwb" type="custom">
+        <plugin filename="libUWBPlugin.so" name="custom::UWBPlugin">
+          <namespace>{namespace}</namespace>
+          <target_link>uwb_anchor_link</target_link>
+          <update_rate>1</update_rate>
+          <mean>{mean}</mean>
+          <sigma>{sigma}</sigma>
+          <inter_robot_distances>{inter_robot_distances}</inter_robot_distances>
+          <prob_loss_measurement>{prob_loss_measurement}</prob_loss_measurement>
+        </plugin>
+      </sensor>
+    </link>
+
+    <link name="{namespace}/uwb_anchor_link">
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.000166667</ixx>
+          <iyy>0.000166667</iyy>
+          <izz>0.000166667</izz>
+        </inertia>
+      </inertial>
+    </link>
+
+    <!-- Joints -->
+    <joint name="{namespace}/base_joint" type="fixed">
+      <parent>{namespace}/base_footprint</parent>
+      <child>{namespace}/base_link</child>
+      <pose>0 0 0.010 0 0 0</pose>
+    </joint>
+
+    <joint name="{namespace}/wheel_left_joint" type="revolute">
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/wheel_left_link</child>
+      <pose>0.0 0.08 0.023 -1.57 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name="{namespace}/wheel_right_joint" type="revolute">
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/wheel_right_link</child>
+      <pose>0.0 -0.08 0.023 -1.57 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name='{namespace}/dummy_back_joint' type='fixed'>
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/dummy_back_link</child>
+      <pose>0.061 0 0 0 0 0</pose>
+    </joint>
+
+    <joint name='{namespace}/caster_back_joint' type='ball'>
+      <parent>{namespace}/dummy_back_link</parent>
+      <child>{namespace}/caster_back_link</child>
+    </joint>
+
+    <joint name='{namespace}/dummy_front_joint' type='fixed'>
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/dummy_front_link</child>
+      <pose>-0.061 0 0 0 0 0</pose>
+    </joint>
+
+    <joint name='{namespace}/caster_front_joint' type='ball'>
+      <parent>{namespace}/dummy_front_link</parent>
+      <child>{namespace}/caster_front_link</child>
+    </joint>
+
+    <!-- <joint name="{namespace}/imu_joint" type="fixed">
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/imu_link</child>
+    </joint> -->
+
+    <joint name='{namespace}/uwb_joint' type='fixed'>
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/uwb_link</child>
+    </joint>
+
+    <joint name='{namespace}/uwb_anchor_joint' type='fixed'>
+      <parent>{namespace}/base_link</parent>
+      <child>{namespace}/uwb_anchor_link</child>
+    </joint>
+
+    <!-- Plugins -->
+    <plugin filename="libOdometryPublisher.so" name="custom::OdometryPublisher">
+      <odom_publish_frequency>20</odom_publish_frequency>
+      <odom_topic>{namespace}/ground_truth</odom_topic>
+      <odom_frame>map</odom_frame>
+      <robot_base_frame>{namespace}/base_footprint</robot_base_frame>
+    </plugin>
+
+    <plugin filename="libDiffDrive.so" name="custom::DiffDrive">
+      <left_joint>{namespace}/wheel_left_joint</left_joint>
+      <right_joint>{namespace}/wheel_right_joint</right_joint>
+      <wheel_separation>0.160</wheel_separation>
+      <wheel_radius>0.033</wheel_radius>
+      <odom_publish_frequency>1</odom_publish_frequency>
+      <topic>{namespace}/cmd_vel</topic>
+      <odom_topic>{namespace}/odom</odom_topic>
+      <tf_topic>/odom/tf</tf_topic>
+      <frame_id>{namespace}/odom</frame_id>
+      <child_frame_id>{namespace}/base_footprint</child_frame_id>
+      <min_linear_velocity>-0.22</min_linear_velocity>
+      <max_linear_velocity>0.22</max_linear_velocity>
+      <min_angular_velocity>-2.84</min_angular_velocity>
+      <max_angular_velocity>2.84</max_angular_velocity>
+    </plugin>
+
+    <plugin filename="libJointStatePublisher.so" name="custom::JointStatePublisher">
+      <joint_publish_frequency>10</joint_publish_frequency>
+      <topic>{namespace}/joint_states</topic>
+      <joint_name>{namespace}/wheel_left_joint</joint_name>
+      <joint_name>{namespace}/wheel_right_joint</joint_name>
+    </plugin>
+
+  </model>
+</sdf>

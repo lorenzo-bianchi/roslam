@@ -1,0 +1,4 @@
+/ro_slam:
+  ros__parameters:
+    wheel_radius: 0.033
+    wheels_separation: 0.16

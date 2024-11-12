@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // Example launch of a python file
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+    },
+    {
+      "name": "ROS: Launch",
+      "type": "ros",
+      "request": "launch",
+      "target": "/home/neo/workspace/src/phd/ro_slam_py/launch/ro_slam_py.launch.py",
+      "env": {
+              "DEBUG": "1",
+             }
+    }
+  ]
+}
