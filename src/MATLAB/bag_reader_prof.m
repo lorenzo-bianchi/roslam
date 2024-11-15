@@ -1,11 +1,6 @@
 %% Cleanup
 clc; clear; close all
 
-%% Plot settings
-font_size = 18;
-line_width_lines = 1;
-line_width_markers = 2;
-
 %% Params
 wheel_radius = 0.033;
 wheels_separation = 0.16;
@@ -77,7 +72,7 @@ if inter_robots_distances
 else
     fprintf('Inter-robots distances NOT AVAILABLE\n');
 end
-fprintf('Available topics:\n');
+fprintf('Available topicjs_msg = readMessages(js_topic)s:\n');
 for name = topics_names
     fprintf('\t- %s\n', name);
 end
@@ -91,7 +86,6 @@ end
 if any(contains(topics_names, 'ground_truth'))
     gt_topics_names = all_topics(contains(all_topics, 'ground_truth'));
     gt_data = struct('times', [], 'x', [], 'y', [], 'theta', [], 'v_lin', [], 'v_ang', []);
-    figure
     for i = 1:length(gt_topics_names)
         gt_topic = select(bag, 'Topic', gt_topics_names(i));
         gt_msg = readMessages(gt_topic);
@@ -112,59 +106,47 @@ if any(contains(topics_names, 'ground_truth'))
         gt_data(i).y = gt_pos_y;
         gt_data(i).v_lin = cellfun(@(m) m.twist.twist.linear.x, gt_msg);
         gt_data(i).v_ang = cellfun(@(m) m.twist.twist.angular.z, gt_msg);
-
-        plot(gt_pos_x, gt_pos_y, '--', 'LineWidth', line_width_lines, 'DisplayName', gt_topics_names(i))
-        hold on
     end
-    plot(pos_anchors(:, 1), pos_anchors(:, 2), 'kh', ...
-        'MarkerSize', 20, 'LineWidth', line_width_markers, 'DisplayName', 'Anchors')
-    title('Ground truth')
-    axis equal
-    xlabel('x [m]')
-    ylabel('y [m]')
-    grid on
-    legend('Location', 'northwest', 'Interpreter', 'none')
-    ax = gca;
-    ax.FontSize = font_size;
 end
 
-% UWB
+%% UWB
 if any(contains(topics_names, 'uwb_tag'))
     uwb_topics_names = all_topics(contains(all_topics, 'uwb_tag'));
-    uwb_data = struct('times', [], 'dist_anchors', [], 'dist_robots', []);
+    uwb_anchors_data = cell(length(uwb_topics_names), 1);
+    uwb_robots_data = cell(length(uwb_topics_names), 1);
     for i = 1:length(uwb_topics_names)
         uwb_topic = select(bag, 'Topic', uwb_topics_names(i));
         num_msgs = uwb_topic.NumMessages;
         uwb_msg = readMessages(uwb_topic);
-        uwb_data(i).times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, uwb_msg);
-        uwb_data(i).times = uwb_data(i).times - uwb_data(i).times(1);
+        times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, uwb_msg);
+        times = times - times(1);
+        uwb_dist = nan*ones(num_msgs, n_anchors);
+        uwb_dist_inter = nan*ones(num_msgs, n_anchors_tot-n_anchors+1);
         for j = 1:num_msgs
-            uwb_dist = nan*ones(1, n_anchors);
-            uwb_dist_inter = nan*ones(1, n_anchors_tot-n_anchors+1);
-            uwb_dist_inter(i) = 0.0;
+            uwb_dist_inter(j, i) = 0.0;
             for k = 1:size(uwb_msg{j}.uwbs, 1)
                 id = uwb_msg{j}.uwbs(k).id;
                 if id > 100
-                    uwb_dist_inter(id-100) = uwb_msg{j}.uwbs(k).dist;
+                    uwb_dist_inter(j, id-100) = uwb_msg{j}.uwbs(k).dist;
                     continue
                 end
-                uwb_dist(id+1) = uwb_msg{j}.uwbs(k).dist;
+                uwb_dist(j, id+1) = uwb_msg{j}.uwbs(k).dist;
             end
-            uwb_data(i).dist_anchors = [uwb_data(i).dist_anchors; uwb_dist];
-            uwb_data(i).dist_robots = [uwb_data(i).dist_robots; uwb_dist_inter];
         end
+        uwb_anchors_data{i} = [times, uwb_dist];
+        uwb_robots_data{i} = [times, uwb_dist_inter];
     end
 end
 
-% Joint states
+%% Joint states
 if any(contains(topics_names, 'joint_states'))
     js_topics_names = all_topics(contains(all_topics, 'joint_states'));
-    js_data = struct('times', [], 'angle_left', [], 'angle_right', [], 'omega_left', [], 'omega_right', []);
+    js_data = cell(length(js_topics_names), 1);
     for i = 1:length(js_topics_names)
         js_topic = select(bag, 'Topic', js_topics_names(i));
         js_msg = readMessages(js_topic);
 
-        if contains(js_msg{i}.name{1}, 'right')
+        if contains(js_msg{1}.name{1}, 'right')
             idx_right = 1;
             idx_left = 2;
         else
@@ -172,16 +154,20 @@ if any(contains(topics_names, 'joint_states'))
             idx_left = 1;
         end
 
-        js_data(i).times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, js_msg);
-        js_data(i).times = js_data(i).times - js_data(i).times(1);
-        js_data(i).angle_left = cellfun(@(m) m.position(idx_left), js_msg);
-        js_data(i).angle_right = cellfun(@(m) m.position(idx_right), js_msg);
-        js_data(i).omega_left = cellfun(@(m) m.velocity(idx_left), js_msg);
-        js_data(i).omega_right = cellfun(@(m) m.velocity(idx_right), js_msg);
+        times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, js_msg);
+        times = times - times(1);
+
+        pos_left = cellfun(@(m) m.position(idx_left), js_msg);
+        pos_left = [0; diff(pos_left) * wheel_radius];
+
+        pos_right = cellfun(@(m) m.position(idx_right), js_msg);
+        pos_right = [0; diff(pos_right) * wheel_radius];
+
+        js_data{i} = [times, pos_right, pos_left];
     end
 end
 
-% Odom
+%% Odom
 if any(contains(topics_names, 'odom'))
     odom_topics_names = all_topics(contains(all_topics, 'odom'));
     odom_data = struct('times', [], 'x', [], 'y', [], 'theta', [], 'v_lin', [], 'v_ang', []);
@@ -221,31 +207,7 @@ roslam_data.anchors_positions = pos_anchors;
 roslam_data.ground_truth = gt_data;
 roslam_data.robot_odometry = odom_data;
 roslam_data.wheels_odometry = js_data;
-roslam_data.uwb_distances = uwb_data;
+roslam_data.uwb_anchors_distances = uwb_anchors_data;
+roslam_data.uwb_inter_robots_distances = uwb_robots_data;
 
 save('roslam_data.mat', 'roslam_data');
-
-%% GT vs odom
-robot = 2;
-gt_x = gt_data(robot).x;
-gt_y = gt_data(robot).y;
-odom_x = odom_data(robot).x;
-odom_y = odom_data(robot).y;
-
-x_start = gt_x(1);
-y_start = gt_y(1);
-
-figure
-plot(gt_x, gt_y, 'LineWidth', line_width_lines, 'DisplayName', 'Ground truth')
-hold on
-plot(odom_x + x_start, odom_y + y_start, 'LineWidth', line_width_lines, 'DisplayName', 'Odom')
-plot(pos_anchors(:, 1), pos_anchors(:, 2), 'kh', ...
-        'MarkerSize', 20, 'LineWidth', line_width_markers, 'DisplayName', 'Anchors')
-title('Ground truth VS Odom')
-axis equal
-xlabel('x [m]')
-ylabel('y [m]')
-grid on
-legend('Location', 'northwest', 'Interpreter', 'none')
-ax = gca;
-ax.FontSize = font_size;
