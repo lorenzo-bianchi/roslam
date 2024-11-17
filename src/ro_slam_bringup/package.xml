@@ -9,10 +9,11 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>ro_slam_interfaces</depend>
-  <depend>ro_slam_py</depend>
   <depend>joy2cmdvel</depend>
   <depend>joystick</depend>
+  <depend>ro_slam_interfaces</depend>
+  <depend>ro_slam_py</depend>
+  <depend>robot_sim</depend>
   <depend>uwb_driver</depend>
 
   <test_depend>ament_lint_auto</test_depend>
