@@ -13,10 +13,16 @@ from tf2_ros import TransformBroadcaster
 from visualization_msgs.msg import MarkerArray
 
 from .ro_slam_qos import qos_best_effort, qos_reliable
-from .ro_slam_fed_ekf import FedEkf, FedEkfData, FedEkfSharedData
+from .ro_slam_fed_ekf import FedEkf, FedEkfData
 
 
 class ROSlamNode(Node):
+    # Import methods
+    from .ro_slam_params import init_parameters
+    from .ro_slam_subscribers import debug_clbk, uwb_array_clbk, odometry_clbk, landmark_array_clbk, landmark_array_test_clbk
+    from .ro_slam_utils import broadcast_pose, publish_tags
+
+
     def __init__(self):
         super().__init__('ro_slam_py')
 
@@ -30,11 +36,6 @@ class ROSlamNode(Node):
 
         self.get_logger().info('Node initialized')
 
-    # Import methods
-    from .ro_slam_params import init_parameters
-    from .ro_slam_subscribers import debug_clbk, uwb_array_clbk, odometry_clbk, landmark_array_clbk, landmark_array_test_clbk
-    from .ro_slam_utils import broadcast_pose, publish_tags
-
 
     def cleanup(self):
         pass
@@ -44,6 +45,8 @@ class ROSlamNode(Node):
         """
         Init EKF
         """
+        from .ro_slam_roma2d import minimize_conflicts
+
         self.robot_id = int(re.findall(r"\d+$", self.get_namespace())[0])
         self.use_pruning = True
         self.min_step_start_pruning = 70
@@ -67,6 +70,10 @@ class ROSlamNode(Node):
         self.data.kl = 0.0001
         self.data.min_steps_reset = 100
         self.data.min_tags_after_reset = 3
+
+        self.data.combs = minimize_conflicts(self.data.n_tags, 3, initial_shuffle=False)
+        from itertools import combinations
+        self.data.combs = list(combinations(range(self.data.n_tags), 3))
 
         self.shared_data = np.empty((0, ), dtype=object)
         self.tags_poses: np.ndarray = None

@@ -19,10 +19,11 @@ class FedEkfData:
     sigma_range: float = 0.0            # Range measurement standard deviation
     # Pruning
     min_zeros_start_pruning: int = 0    # Minimum number of zeros to start pruning
-    # ICP parameters
+    # RoMa2D parameters
     num_iterations: int = 0             # Number of iterations
     distance_threshold: float = 0.0     # Distance threshold
     percent_min_inliers: float = 0.0    # Minimum percentage of inliers
+    combs: list = None                  # List of all combinations
     # Reset parameters
     min_steps_reset: int = 0            # Minimum numbers of steps to reset
     min_tags_after_reset: int = 0       # Minimum number of converged tags after reset
@@ -59,6 +60,7 @@ class FedEkf:
         self.num_iterations = data.num_iterations
         self.distance_threshold = data.distance_threshold
         self.percent_min_inliers = data.percent_min_inliers
+        self.combs = data.combs
         self.min_steps_reset = data.min_steps_reset
         self.wheels_separation = data.wheels_separation
         self.kr = data.kr
@@ -342,6 +344,7 @@ class FedEkf:
             for robot2 in range(robot1+1, n_other_robots):
                 tags2 = other_robots[robot2].tags_positions
                 _, _, inliers = roma2d(tags1.T, tags2.T,
+                                       self.combs,
                                        self.num_iterations, self.distance_threshold,
                                        round(self.percent_min_inliers * n_tags))
 
@@ -361,6 +364,7 @@ class FedEkf:
         for idx in range(n_other_robots):
             other_robots_tags = other_robots[idx].tags_positions
             R, t, inliers = roma2d(other_robots_tags.T, this_robot.tags_positions.T,
+                                   self.combs,
                                    self.num_iterations, self.distance_threshold,
                                    round(self.percent_min_inliers * n_tags))
             if inliers.size == 0:
