@@ -10,8 +10,14 @@ def roma2d(A: np.ndarray, B: np.ndarray, max_iterations: int, dist_thr: float, m
             break
 
         comb = list(comb)
+        A3, B3 = A[comb], B[comb]
+        dA = A3[0,0] * (A3[1,1] - A3[2,1]) + A3[1,0] * (A3[2,1] - A3[0,1]) + A3[2,0] * (A3[0,1] - A3[1,1])
+        dB = B3[0,0] * (B3[1,1] - B3[2,1]) + B3[1,0] * (B3[2,1] - B3[0,1]) + B3[2,0] * (B3[0,1] - B3[1,1])
+        if dA * dB < 0.1:   # Check if the 3 points are collinear or mirrored
+            continue
+
         # Compute transformation (R, t) using the 3 points sampled
-        R, t = compute_transform(A[comb], B[comb])
+        R, t = compute_transform(A3, B3)
 
         # Apply transformation to all points in A
         A_transformed = np.dot(A, R.T) + t
@@ -41,22 +47,17 @@ def compute_transform(source_points: np.ndarray, target_points: np.ndarray):
     U, _, Vt = np.linalg.svd(centered_source_points.T @ centered_target_points)
 
     # Compute rotation
-    R = Vt.T @ U.T
-
-    # Ensure matrix is a proper rotation
-    if R[0,0] * R[1,1] - R[0,1] * R[1,0] < 0:
-        Vt[-1, :] *= -1
-        R = Vt.T @ U.T
+    Rt = U @ Vt
 
     # Compute translation
-    t = centroid_target - R @ centroid_source
+    t = centroid_target - Rt.T @ centroid_source
 
-    return R, t
+    return Rt.T, t
 
 if __name__ == '__main__':
-    import time
+    import timeit
 
-    # Test
+    # Test case
     A = np.array([
         [-2.5257, 1.9402],
         [-2.1892, -7.7403],
@@ -82,9 +83,22 @@ if __name__ == '__main__':
         [0.2740, 4.3213]
     ])
 
-    tic = time.time()
+    # Single test
     R, t, inliers = roma2d(A, B, 120, 0.1, np.round(0.7 * A.shape[0]))
-    print(f"Elapsed time: {time.time() - tic}")
+    print('Results:')
+    print('========')
+    print('R:')
     print(R)
+    print()
+    print('t:')
     print(t)
+    print()
+    print('Inliers:')
     print(inliers)
+    print('========')
+
+    # Test with timeit
+    n_tests = 1000
+    total_time = timeit.timeit('roma2d(A, B, 120, 0.1, np.round(0.7 * A.shape[0]))', globals=globals(), number=n_tests)
+    print(f'Total time: {total_time}')
+    print(f'Average time: {total_time / n_tests}')
