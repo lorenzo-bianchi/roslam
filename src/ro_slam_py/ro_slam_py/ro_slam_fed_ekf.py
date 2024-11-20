@@ -227,6 +227,8 @@ class FedEkf:
         n_tags = self.n_tags
         change = False
 
+        pruning_thr = np.minimum(1e-2, 0.00001 * self.k)
+
         # Check if at least min_zeros_start_pruning hypotheses have weights below threshold
         if np.any(self.hyps_steps_start_pruning == 0):
             for idx_tag in range(n_tags):
@@ -236,7 +238,7 @@ class FedEkf:
                 n_phi = self.n_phi_vett[idx_tag]
                 n_zeros = 0
                 for idx_phi in range(n_phi):
-                    if self.weights[idx_tag, idx_phi] < 0.00001 / n_phi:
+                    if self.weights[idx_tag, idx_phi] < pruning_thr / n_phi:
                         n_zeros += 1
 
                 if n_zeros >= self.min_zeros_start_pruning:
@@ -249,8 +251,9 @@ class FedEkf:
             # If previous check is true, start pruning removing rows and cols from matrices
             n_phi = self.n_phi_vett[idx_tag]
             idx_phi = 0
+
             while idx_phi < n_phi:
-                if self.weights[idx_tag, idx_phi] < 0.00001 / n_phi:
+                if self.weights[idx_tag, idx_phi] < pruning_thr / n_phi:
                     change = True
                     n_phi -= 1
 
@@ -505,7 +508,6 @@ class FedEkf:
 
         if change > 0:
             self.reshape_matrices(pruning=False)
-
 
     def reshape_matrices(self, pruning: bool = True):
         n_phi_tag_new = np.sum(self.n_phi_vett)

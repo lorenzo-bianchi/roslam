@@ -224,6 +224,8 @@ classdef FedEkf < handle
             nTag = obj.data.nTag;
             change = false;
 
+            pruning_thr = min(1e-2, 0.00001 * obj.k);
+
             if any(obj.startPruning == 0)
                 for indTag = 1:nTag
                     if obj.startPruning(indTag) > 0
@@ -233,7 +235,7 @@ classdef FedEkf < handle
                     nPhi = obj.nPhiVett(indTag);
                     nZeri = 0;
                     for indPhi = 1:nPhi
-                        if obj.pesi(indTag, indPhi) < 0.00001/nPhi
+                        if obj.pesi(indTag, indPhi) < pruning_thr/nPhi
                             nZeri = nZeri + 1;
                         end
                     end
@@ -251,7 +253,7 @@ classdef FedEkf < handle
                 nPhi = obj.nPhiVett(indTag);
                 indPhi = 1;
                 while indPhi <= nPhi
-                    if obj.pesi(indTag, indPhi) < 0.00001/nPhi
+                    if obj.pesi(indTag, indPhi) < pruning_thr/nPhi
                         change = true;
                         nPhi = nPhi - 1;
 
@@ -462,9 +464,7 @@ classdef FedEkf < handle
             end
 
             to_be_removed = [];
-            if obj.id == 1
-                a = 1;
-            end
+
             for idx = 1:length(other_measures)
                 otherRobotTags = other_measures(idx).tags;
                 [R, t, inliers] = ransacRototranslation(otherRobotTags', thisRobotTags, obj.data.numIterations, obj.data.distanceThreshold, round(obj.data.percentMinInliers * nTag));
@@ -644,9 +644,6 @@ classdef FedEkf < handle
 
         %
         function [obj] = reset(obj)
-            if obj.id == 1
-                a = 1;
-            end
             data_ = obj.data;
 
             nTag = data_.nTag;
