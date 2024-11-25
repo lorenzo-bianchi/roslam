@@ -2,6 +2,8 @@ import os
 import numpy as np
 import time
 
+import cProfile
+
 from ro_slam_interfaces.msg import UwbArray, Landmark, LandmarkArray
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Empty
@@ -22,9 +24,15 @@ def uwb_array_clbk(self, msg: UwbArray):
     """
     UWB array callback
     """
-    distances = np.zeros((msg.anchor_num, ))
-    for anchor in msg.uwbs:
-        distances[anchor.id] = anchor.dist
+    if len(self.uwb_idx) != 0:
+        distances = np.full((self.data.n_tags, ), np.inf)
+        for anchor in msg.uwbs:
+            distances[self.uwb_idx[anchor.id_str]] = anchor.dist
+    else:
+        distances = np.zeros((msg.anchor_num, ))
+        for anchor in msg.uwbs:
+            distances[anchor.id] = anchor.dist
+    print(distances)
 
     tic = time.time()
     self.fed_ekf.correction(distances)
@@ -117,9 +125,13 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
         this_robot.tags_positions = np.array([[l['x'], l['y']] for l in self.tags_poses]).T
         this_robot.tags_vars = np.array([[l['var_x'], l['var_y'], l['cov_xy']] for l in self.tags_poses]).T
 
+        profiler = cProfile.Profile()
+        profiler.enable()
         tic = time.time()
         self.fed_ekf.correction_shared(this_robot, self.shared_data)
-        print(f"Correction shared time: {time.time() - tic}")
+        print(f'Correction shared time: {time.time() - tic}')
+        profiler.disable()
+        profiler.dump_stats(f'logs/profiler_{self.fed_ekf.k}.prof')
 
         if self.use_pruning and self.fed_ekf.k >= self.min_step_start_pruning - 1:
             self.fed_ekf.pruning()

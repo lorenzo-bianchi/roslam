@@ -48,28 +48,25 @@ class ROSlamNode(Node):
         from .ro_slam_roma2d import minimize_conflicts
 
         self.robot_id = int(re.findall(r"\d+$", self.get_namespace())[0])
-        self.use_pruning = True
-        self.min_step_start_pruning = 70
-        self.use_sharing = True
-        self.min_step_start_sharing = 100
-        self.actual_step_start_sharing = -1
-        self.use_reset = True
         self.t_resets = []
 
         self.data = FedEkfData()
-        self.data.n_tags = 10
-        self.data.n_phi = 8
-        self.data.sigma_phi = 2 * pi / (1.5 * self.data.n_phi)
-        self.data.sigma_range = 0.2
-        self.data.min_zeros_start_pruning = ceil(0.6 * self.data.n_phi)
-        self.data.num_iterations = 100
-        self.data.distance_threshold = 0.1
-        self.data.percent_min_inliers = 0.7
+        self.data.n_tags = self.n_tags
+        self.data.n_phi = self.n_phi
+        self.data.sigma_phi = 2 * pi / (1.5 * self.n_phi)
+        self.data.sigma_range = self.sigma_range
+        self.data.min_zeros_start_pruning = ceil(0.6 * self.n_phi)
+        self.data.num_iterations = self.num_iterations
+        self.data.distance_threshold = self.distance_threshold
+        self.data.percent_min_inliers = self.percent_min_inliers
         self.data.wheels_separation = self.wheels_separation
-        self.data.kr = 0.0001
-        self.data.kl = 0.0001
-        self.data.min_steps_reset = 100
-        self.data.min_tags_after_reset = 3
+        self.data.kr = self.kr
+        self.data.kl = self.kl
+        self.data.min_steps_reset = self.min_steps_reset
+        self.data.min_tags_after_reset = self.min_tags_after_reset
+
+        if len(self.uwb_id_order) > 0:
+            self.uwb_idx = {uwb_id: idx for idx, uwb_id in enumerate(self.uwb_id_order)}
 
         self.data.combs = minimize_conflicts(self.data.n_tags, 3, initial_shuffle=False)
         from itertools import combinations

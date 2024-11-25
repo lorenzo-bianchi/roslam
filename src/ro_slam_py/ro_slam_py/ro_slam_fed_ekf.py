@@ -155,6 +155,9 @@ class FedEkf:
         idx_mat_cumul = np.cumsum(np.concatenate(([0], self.n_phi_vett[:-1])))
 
         for idx_tag in range(n_tags):
+            if distances[idx_tag] == np.inf:
+                continue
+
             idx_mat = idx_mat_cumul[idx_tag]
 
             n_phi = self.n_phi_vett[idx_tag]

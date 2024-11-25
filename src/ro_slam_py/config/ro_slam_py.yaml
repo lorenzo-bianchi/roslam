@@ -4,5 +4,52 @@
     odom_frame: robot1/odom
     robot_color: [1.0, 0.0, 0.0]
     show_tags_var: false
+    uwb_id_order: ['44AE', '5723', '8192', '08B0']
     wheel_radius: 0.033
     wheels_separation: 0.16
+
+    use_pruning: true
+    min_step_start_pruning: 70
+    use_sharing: true
+    min_step_start_sharing: 100
+    actual_step_start_sharing: -1
+    use_reset: true
+
+    n_tags: 10
+    n_phi: 8
+    sigma_range: 0.2
+    num_iterations: 100
+    distance_threshold: 0.1
+    percent_min_inliers: 0.7
+    kr: 0.0001
+    kl: 0.0001
+    min_steps_reset: 100
+    min_tags_after_reset: 3
+
+/robot2/ro_slam_py:
+  ros__parameters:
+    local_frame: robot2/base_footprint
+    odom_frame: robot2/odom
+    robot_color: [1.0, 0.0, 0.0]
+    show_tags_var: false
+    uwb_id_order: ['44AE', '5723', '8192', '08B0']
+    wheel_radius: 0.033
+    wheels_separation: 0.16
+
+    use_pruning: true
+    min_step_start_pruning: 70
+    use_sharing: true
+    min_step_start_sharing: 100
+    actual_step_start_sharing: -1
+    use_reset: true
+
+    n_tags: 4
+    n_phi: 8
+    sigma_range: 0.2
+    num_iterations: 100
+    distance_threshold: 0.1
+    percent_min_inliers: 0.7
+    kr: 0.0001
+    kl: 0.0001
+    min_steps_reset: 100
+    min_tags_after_reset: 3
