@@ -9,6 +9,12 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <exec_depend>DiffDrive</exec_depend>
+  <exec_depend>JointStatePublisher</exec_depend>
+  <exec_depend>uwb_parser</exec_depend>
+  <exec_depend>UWBPlugin</exec_depend>
+  <exec_depend>OdometryPublisher</exec_depend>
+  <exec_depend>ro_slam_interfaces</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>ros_gz_gazebo</exec_depend>
