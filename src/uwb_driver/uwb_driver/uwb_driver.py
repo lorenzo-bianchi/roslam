@@ -50,8 +50,8 @@ class UWBDriver(Node):
 
 
         # Serial port settings
-        self.uwb_pub = self.create_publisher(UwbArray, f'/tag{self.id}/uwb_distances', 0)
-        self.uwb_pub_rviz = self.create_publisher(PoseStamped, f'/tag{self.id}/rviz/uwb_pose', 0)
+        self.uwb_pub = self.create_publisher(UwbArray, f'/robot{self.id}/uwb_tag', 0)
+        self.uwb_pub_rviz = self.create_publisher(PoseStamped, f'/robot{self.id}/rviz/uwb_pose', 0)
 
         try:
             self.serial_port_DWM1001 = serial.Serial(
@@ -109,6 +109,7 @@ class UWBDriver(Node):
 
                     data = splits[i*6 : (i+1)*6]
 
+                    msg.id = i
                     msg.id_str = data[1]
                     msg.x = float(data[2])
                     msg.y = float(data[3])
@@ -137,6 +138,7 @@ class UWBDriver(Node):
 
             except:
                 self.get_logger().error('Error inside thread. Press CTRL+C to quit...')
+                time.sleep(1)
 
 def main(args=None):
     rclpy.init(args=args)
