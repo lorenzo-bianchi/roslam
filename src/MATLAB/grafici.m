@@ -31,7 +31,6 @@ if DISEGNA_PLOT
     time = t_min:t_max;
 
     for robot = 1:nRobot
-        % Errori assoluti
         grafico_singolo;
 
         if 0
@@ -84,5 +83,21 @@ if DISEGNA_VAR
         % plot(t, sqrt(var_x.^2 + var_y.^2), 'k', 'LineWidth', 1.5, 'DisplayName', 'var_tot')
         xlabel('simulation step');
         ylabel('[m]');
+    end
+end
+
+if DISEGNA_POSA
+    %%
+    t_min = 1;
+    t_max = nPassi;
+    time = t_min:t_max;
+
+    for robot = 1:nRobot
+        posa_singolo;
+
+        if 0
+            print(['plot', num2str(robot), '.eps'], '-depsc2');
+        end
+        %%
     end
 end
