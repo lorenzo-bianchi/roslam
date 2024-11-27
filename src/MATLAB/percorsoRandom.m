@@ -1,7 +1,5 @@
 function percorso = percorsoRandom(data, passi_traj, seed)
     rng(seed);
-
-    gradi = pi/180;
     
     passoOdometrico = 0.01;
     nPassi = passi_traj;
@@ -23,14 +21,14 @@ function percorso = percorsoRandom(data, passi_traj, seed)
 
     xVett(1) = (L-2*clearance)*rand + clearance; % 1 + clearance*cos(2*pi*rand()); %clearance;% + rand*(L-2*clearance);
     yVett(1) = (L-2*clearance)*rand + clearance; % 1 + clearance*sin(2*pi*rand()); %70;% clearance + rand*(L-2*clearance);
-    thetaVett(1) = 360*rand - 180; % angolo in gradi
+    thetaVett(1) = 2*pi*rand - pi; % angolo in radianti
     deltaRho = passoOdometrico*ones(nPassi,1);
 
     uR = zeros(nPassi,1);
     uL = zeros(nPassi,1);
 
-    cinque = 150; % angolo max di curva totale
-    uno = 5; % angolo max di curva in uno step
+    cinque = 150*pi/180; % angolo max di curva totale
+    uno = 5*pi/180; % angolo max di curva in uno step
 
     k = 1;
     while k < nPassi
@@ -43,40 +41,40 @@ function percorso = percorsoRandom(data, passi_traj, seed)
         % end
       
         if distanza < clearance || distanzaTag < 0.2 || rand > 0.995 % ho da girà!
-            curvaDaFare = max(uno, rand*cinque); % è la curva in gradi che deve essere effettuata
+            curvaDaFare = max(uno, rand*cinque); % è la curva in radianti che deve essere effettuata
             passiCurvaDaFare = round(curvaDaFare/uno); % è il numero di passi che il robot impiegherà per fare la curva
-            gradiPerPasso = curvaDaFare/passiCurvaDaFare;
+            radPerPasso = curvaDaFare/passiCurvaDaFare;
             kIn = min(k, nPassi);
             kFin = min(k+passiCurvaDaFare, nPassi-1);
             indiceK = kIn:kFin;
-            direzione = mod(round(thetaVett(k)/gradi), 360); % direzione in gradi tra 1 e 360        
+            direzione = mod(round(thetaVett(k)), 360); % direzione in radianti tra 1 e 360        
             deltaRho(indiceK) = 0; % mi fermo
             if distanzaTag < 0.2 % mi sto dirigendo sotto il tag
-                deltaTheta(indiceK) = gradiPerPasso*gradi; % giro verso destra
+                deltaTheta(indiceK) = radPerPasso; % giro verso destra
             end
             if lato == 1 % mi sto dirigendo contro il lato sotto
                 if direzione>270 % sto puntando verso destra
-                    deltaTheta(indiceK) = gradiPerPasso*gradi; % giro verso destra
+                    deltaTheta(indiceK) = radPerPasso; % giro verso destra
                 else 
-                    deltaTheta(indiceK) = -gradiPerPasso*gradi; % giro verso sinistra perché sto puntando verso sinistra
+                    deltaTheta(indiceK) = -radPerPasso; % giro verso sinistra perché sto puntando verso sinistra
                 end
             elseif lato == 2 % mi sto dirigendo contro il lato destro
                 if direzione>180 % sto puntando verso il basso
-                    deltaTheta(indiceK) = -gradiPerPasso*gradi; % giro verso il basso
+                    deltaTheta(indiceK) = -radPerPasso; % giro verso il basso
                 else 
-                    deltaTheta(indiceK) = gradiPerPasso*gradi; % giro verso l'alto perché sto puntando verso l'alto
+                    deltaTheta(indiceK) = radPerPasso; % giro verso l'alto perché sto puntando verso l'alto
                 end
             elseif lato == 3 % mi sto dirigendo contro il lato sopra
                 if direzione<90 % sto puntando verso destra
-                    deltaTheta(indiceK) = -gradiPerPasso*gradi; % giro verso destra
+                    deltaTheta(indiceK) = -radPerPasso; % giro verso destra
                 else 
-                    deltaTheta(indiceK) = gradiPerPasso*gradi; % giro verso sinistra perché sto puntando verso sinistra
+                    deltaTheta(indiceK) = radPerPasso; % giro verso sinistra perché sto puntando verso sinistra
                 end            
             elseif lato == 4 % mi sto dirigendo contro il lato sinistro
                 if direzione>180 % sto puntando verso il basso
-                    deltaTheta(indiceK) = gradiPerPasso*gradi; % giro verso il basso
+                    deltaTheta(indiceK) = radPerPasso; % giro verso il basso
                 else 
-                    deltaTheta(indiceK) = -gradiPerPasso*gradi; % giro verso l'alto perché sto puntando verso l'alto
+                    deltaTheta(indiceK) = -radPerPasso; % giro verso l'alto perché sto puntando verso l'alto
                 end
             end 
             for k = kIn:kFin
