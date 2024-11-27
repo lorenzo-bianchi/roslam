@@ -450,7 +450,7 @@ classdef FedEkf < handle
                 tags1 = other_measures(robot1).tags;
                 for robot2 = robot1+1:length(other_measures)
                     tags2 = other_measures(robot2).tags;
-                    [~, ~, inliers] = ransacRototranslation(tags1', tags2', obj.data.numIterations, obj.data.distanceThreshold, round(obj.data.percentMinInliers * nTag));
+                    [~, ~, inliers] = ransacRototranslation(tags1', tags2', obj.data.numIterationsA, obj.data.distanceThresholdA, round(obj.data.percentMinInliersA * nTag));
                     if ~isempty(inliers)
                         empty = 0;
                         inliersGood(:, inliers, robot1) = 1;
@@ -467,7 +467,7 @@ classdef FedEkf < handle
 
             for idx = 1:length(other_measures)
                 otherRobotTags = other_measures(idx).tags;
-                [R, t, inliers] = ransacRototranslation(otherRobotTags', thisRobotTags, obj.data.numIterations, obj.data.distanceThreshold, round(obj.data.percentMinInliers * nTag));
+                [R, t, inliers] = ransacRototranslation(otherRobotTags', thisRobotTags, obj.data.numIterationsB, obj.data.distanceThresholdB, round(obj.data.percentMinInliersB * nTag));
                 if isempty(inliers)
                     to_be_removed(end+1) = idx;
                     continue
@@ -476,8 +476,8 @@ classdef FedEkf < handle
                 T = [R, t; zeros(1, 2), 1];
 
                 % Applica rototraslazione alle posizioni dei tag
-                tags_to_use = T*[otherRobotTags; ones(1, nTag)];
-                posTagRobot(:, :, end+1) = tags_to_use(1:2, :);
+                otherRobotTagsRot = T*[otherRobotTags; ones(1, nTag)];
+                posTagRobot(:, :, end+1) = otherRobotTagsRot(1:2, :);
 
                 % Applica rotazione alle varianze
                 for indTag = 1:nTag
@@ -552,7 +552,7 @@ classdef FedEkf < handle
                         continue
                     end
 
-                    var_ = 0.05;                                         % varianza statica
+                    var_ = 0.15;                                         % varianza statica
                     fused_var_x = var_;
                     fused_var_y = var_;
                     % fused_var_x = 100*vars(1, indTag, idx_pos);           % singole misure
@@ -653,7 +653,9 @@ classdef FedEkf < handle
 
             obj.innovazione = zeros(nTag*nPhiMax, 1);
             obj.pesi = (1/nPhiMax)*ones(nTag, nPhiMax);
+            pose = obj.xHatSLAM(1:3, :);
             obj.xHatSLAM = zeros(3+(3+nPhiMax)*nTag, nPassi);
+            obj.xHatSLAM(1:3, :) = pose;
             obj.P = zeros(3+(3+nPhiMax)*nTag, 3+(3+nPhiMax)*nTag);
             obj.Ptag = diag([0, 0, obj.sigmaD^2, obj.sigmaPhi^2*ones(1, nPhiMax)]);
 
@@ -694,5 +696,6 @@ classdef FedEkf < handle
             %obj.data.resetThr = ;
             obj.do_reset = 0;
         end
+
     end % methods
 end % class

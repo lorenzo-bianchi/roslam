@@ -1,4 +1,4 @@
-seed = 35;  %34
+seed = 34;  %34
 rng(seed)
 
 DISEGNA_ANIMAZIONE = 0;
@@ -6,6 +6,7 @@ DISEGNA_ULTIMO = 0;
 DISEGNA_PLOT = 0;
 DISEGNA_ICP = 0;
 DISEGNA_VAR = 0;
+DISEGNA_POSA = 1;
 displayErrori = 0;
 
 data = struct();
@@ -28,9 +29,14 @@ sigmaDistanzaModello = sigmaDistanza; % Per prevedere anche un'incertezza sulla 
 sigmaMisuraMedia = 1.0;
 
 % ransac
-numIterations = 100;
-distanceThreshold = 0.1;
-percentMinInliers = 0.7;
+numIterationsA = 120;       % other tags -> other tags
+distanceThresholdA = 0.2;
+percentMinInliersA = 0.4;
+numIterationsB = 120;       % this tag ->other tags
+distanceThresholdB = 0.1;
+percentMinInliersB = 0.6;
+
+
 
 Nstep = 1; % passi tra una misura e la successiva
 possibiliPhi = linspace(-pi+2*pi/nPhi, pi, nPhi);
@@ -95,9 +101,12 @@ data.KLvera = KLvera;
 data.pruning = pruning;
 data.minZerosStartPruning = minZerosStartPruning;
 
-data.numIterations = numIterations;
-data.distanceThreshold = distanceThreshold;
-data.percentMinInliers = percentMinInliers;
+data.numIterationsA = numIterationsA;
+data.distanceThresholdA = distanceThresholdA;
+data.percentMinInliersA = percentMinInliersA;
+data.numIterationsB = numIterationsB;
+data.distanceThresholdB = distanceThresholdB;
+data.percentMinInliersB = percentMinInliersB;
 
 data.resetThr = resetThr;
 data.reset = reset;

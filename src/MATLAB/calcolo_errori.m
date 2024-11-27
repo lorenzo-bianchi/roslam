@@ -38,7 +38,7 @@ for robot = 1:nRobot
     erroreAssolutoRobot(robot) = sqrt((posRobGlob(1)-xVett(k))^2+(posRobGlob(2)-yVett(k))^2);
 
     robot_tags = [ekfs(robot).xHatTagStoria(:, end)'; ekfs(robot).yHatTagStoria(:, end)']';
-    [RR, tt, inl] = ransacRototranslation(robot_tags, cTag, data.numIterations, 0.25, 5);
+    [RR, tt, inl] = ransacRototranslation(robot_tags, cTag, data.numIterationsA, 0.25, 5);
     if isempty(inl)
         erroriMediPostICP(robot) = nan;
     else
