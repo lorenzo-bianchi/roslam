@@ -15,7 +15,7 @@ tiledlayout(1, 3, 'TileSpacing', 'compact')
 for idx = 1:3
     nexttile
 
-    plot(time, gt(:, idx), 'r--', 'Linewidth', line_width, 'DisplayName', 'Ground truth')    % traiettoria
+    plot(time, gt(:, idx), '--', 'Color', '#006400', 'Linewidth', line_width, 'DisplayName', 'Ground truth')    % traiettoria
     hold on
 
     if idx ~= 3
