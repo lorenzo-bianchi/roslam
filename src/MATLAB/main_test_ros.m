@@ -1,6 +1,6 @@
 clc; clear; close all;
 load('percorsi.mat', 'percorsi');
-seed = 12;
+seed = 41;
 
 nRobot = 6;
 
@@ -12,21 +12,24 @@ nPassi = 1500;
 nTag = 10;
 nPhi = 8; % numero ipotesi angolo (si può poi variare in funzione della distanza misurata)
 pruning = 1;
-minZerosStartPruning = ceil(nPhi*0.6);
-stepStartPruning0 = 70;         % mettere valore piccolo per evitare errori iniziali
+minZerosStartPruning = ceil(nPhi*0.3);
+stepStartPruning0 = 100;         % mettere valore piccolo per evitare errori iniziali
 stepStartPruning = repmat({stepStartPruning0}, 1, nRobot);
-sharing = 1;
+sharing = 0;
 stepStartSharing = 400;
-reset = 1;
-resetThr = 100;
+reset = 0;
+resetThr = 10;
 
-sigmaDistanza = 0.2; % std in m della misura di range
-sigmaMisuraMedia = 1.0;
+sigmaDistanza = 0.3; % std in m della misura di range
+sigmaMisuraMedia = 0.5;
 
 % ransac
-numIterations = 100;
-distanceThreshold = 0.1;
-percentMinInliers = 0.7;
+numIterationsA = 120;       % other tags -> other tags
+distanceThresholdA = 0.2;
+percentMinInliersA = 0.4;
+numIterationsB = 120;       % this tag -> other tags
+distanceThresholdB = 0.1;
+percentMinInliersB = 0.6;
 
 possibiliPhi = linspace(-pi+2*pi/nPhi, pi, nPhi);
 sigmaPhi = 2*pi/(1.5*nPhi); %pi/(3*nPhi);
@@ -54,9 +57,12 @@ data.KL = KL;
 data.pruning = pruning;
 data.minZerosStartPruning = minZerosStartPruning;
 
-data.numIterations = numIterations;
-data.distanceThreshold = distanceThreshold;
-data.percentMinInliers = percentMinInliers;
+data.numIterationsA = numIterationsA;
+data.distanceThresholdA = distanceThresholdA;
+data.percentMinInliersA = percentMinInliersA;
+data.numIterationsB = numIterationsB;
+data.distanceThresholdB = distanceThresholdB;
+data.percentMinInliersB = percentMinInliersB;
 
 data.resetThr = resetThr;
 data.reset = reset;
@@ -110,7 +116,7 @@ rng(seed);
 pause(1)
 
 pause_sleep = 0.05;
-stops = [];
+stops = [600];
 for iter = 1:1000
     k = k + 1;
     disp(k)
@@ -157,16 +163,16 @@ for iter = 1:1000
 
         ekfs(robot).correction(misureRange);
 
-        if robot == curr_robot
-            disp(ekfs(robot).xHatSLAM(:, k+1)')
-            disp(ekfs(robot).pesi)
-        end
-
         if pruning && k >= stepStartPruning{robot}(end)
             ekfs(robot).pruning();
         end
     
         ekfs(robot).save_history();
+
+        if robot == curr_robot
+            disp(ekfs(robot).xHatSLAM(:, k+1)')
+            disp(ekfs(robot).pesi)
+        end
     end
 
     % CORREZIONE con altre misure
