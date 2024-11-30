@@ -180,6 +180,8 @@ classdef FedEkf < handle
 
                 probMisura_ij = zeros(nPhi, 1);
 
+                var_ = nPhi * obj.sigmaD^2;
+
                 for indPhi = 1:nPhi
                     phi_ij = obj.xHatSLAM(2+ind0+indPhi, obj.k+1);
                     cosPhi_ij = cos(phi_ij);
@@ -190,7 +192,7 @@ classdef FedEkf < handle
                     deltaMisura_ij = misureRange(indTag) - misuraRange_ij;
                     
                     obj.innovazione(indMat+indPhi) = deltaMisura_ij;
-                    probMisura_ij(indPhi) = exp(-deltaMisura_ij^2/(2*obj.sigmaD^2));
+                    probMisura_ij(indPhi) = exp(-deltaMisura_ij^2/(2*var_));
                     probMisura_ij(indPhi) = max(probMisura_ij(indPhi), 1e-100);
                     obj.pesi(indTag,indPhi) = obj.pesi(indTag,indPhi)*probMisura_ij(indPhi);
     
@@ -205,7 +207,7 @@ classdef FedEkf < handle
                 
                 % Matrice covarianza misure con formula che tiene conto dell'Information Sharing
                 for indPhi = 1:nPhi
-                    obj.Rs(indMat+indPhi, indMat+indPhi) = obj.sigmaD^2/(max(0.0001, lambda_ij(indPhi)));
+                    obj.Rs(indMat+indPhi, indMat+indPhi) = var_/(max(0.0001, lambda_ij(indPhi)));
                 end
     
             end
@@ -224,7 +226,7 @@ classdef FedEkf < handle
             nTag = obj.data.nTag;
             change = false;
 
-            pruning_thr = min(1e-2, 0.00001 * obj.k);
+            pruning_thr = min(5e-2, 0.00001 * obj.k);
 
             if any(obj.startPruning == 0)
                 for indTag = 1:nTag
@@ -283,8 +285,12 @@ classdef FedEkf < handle
                     peso2 = obj.pesi(indTag, 2);
 
                     min_w = 0.9;
-                    w = max(min_w, -(1-min_w)/6000*obj.k+1); 
-                    if  max(peso1, peso2) > w && abs(phi1-phi2) < 5*pi/180
+                    w = max(min_w, -(1-min_w)/6000*obj.k+1);
+                    delta = mod(abs(phi1 - phi2), 2*pi);
+                    if delta > pi
+                        delta = 2*pi - delta;
+                    end
+                    if max(peso1, peso2) > w || delta < 10*pi/180
                         change = true;
 
                         if peso1 > peso2
@@ -552,16 +558,19 @@ classdef FedEkf < handle
                         continue
                     end
 
-                    var_ = 0.15;                                         % varianza statica
-                    fused_var_x = var_;
-                    fused_var_y = var_;
+                    % var_ = 0.15;                                         % varianza statica
+                    % fused_var_x = var_;
+                    % fused_var_y = var_;
                     % fused_var_x = 100*vars(1, indTag, idx_pos);           % singole misure
                     % fused_var_y = 100*vars(2, indTag, idx_pos);
                     % fused_var_x = 1 / sum(1 ./ vars(1, indTag, :));   % media misure
                     % fused_var_y = 1 / sum(1 ./ vars(2, indTag, :));
     
-                    sigmaX = sqrt(fused_var_x);
-                    sigmaY = sqrt(fused_var_y);
+                    % sigmaX = sqrt(fused_var_x);
+                    % sigmaY = sqrt(fused_var_y);
+
+                    sigmaX = obj.data.sigmaMisuraMedia;
+                    sigmaY = obj.data.sigmaMisuraMedia;
     
                     ind0 = obj.xHatCumIndices(indTag+1);
                     x_i   = obj.xHatSLAM(0+ind0, obj.k+1);

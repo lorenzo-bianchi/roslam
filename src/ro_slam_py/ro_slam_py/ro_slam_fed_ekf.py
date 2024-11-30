@@ -12,25 +12,29 @@ pose_type = np.dtype([('x', mtype), ('y', mtype), \
 
 @dataclass
 class FedEkfData:
-    n_tags: int = 0                     # Number of tags
-    n_phi: int = 0                      # Number of hypotheses
+    n_tags: int = 0                         # Number of tags
+    n_phi: int = 0                          # Number of hypotheses
     # Standard deviations
-    sigma_phi: float = 0.0              # Phi standard deviation
-    sigma_range: float = 0.0            # Range measurement standard deviation
+    sigma_phi: float = 0.0                  # Phi standard deviation
+    sigma_range: float = 0.0                # Range measurement standard deviation
+    sigma_shared: float = 0.0               # Shared measurement standard deviation
     # Pruning
-    min_zeros_start_pruning: int = 0    # Minimum number of zeros to start pruning
+    min_zeros_start_pruning: int = 0        # Minimum number of zeros to start pruning
     # RoMa2D parameters
-    num_iterations: int = 0             # Number of iterations
-    distance_threshold: float = 0.0     # Distance threshold
-    percent_min_inliers: float = 0.0    # Minimum percentage of inliers
-    combs: list = None                  # List of all combinations
+    num_iterations_pre: int = 0             # Number of iterations
+    distance_threshold_pre: float = 0.0     # Distance threshold
+    percent_min_inliers_pre: float = 0.0    # Minimum percentage of inliers
+    num_iterations_post: int = 0            # Number of iterations
+    distance_threshold_post: float = 0.0    # Distance threshold
+    percent_min_inliers_post: float = 0.0   # Minimum percentage of inliers
+    combs: list = None                      # List of all combinations
     # Reset parameters
-    min_steps_reset: int = 0            # Minimum numbers of steps to reset
-    min_tags_after_reset: int = 0       # Minimum number of converged tags after reset
+    min_steps_reset: int = 0                # Minimum numbers of steps to reset
+    min_tags_after_reset: int = 0           # Minimum number of converged tags after reset
     #
-    wheels_separation: float = 0.0      # Wheels separation
-    kr: float = 0.0                     # Unsystematic odometric error
-    kl: float = 0.0                     # Unsystematic odometric error
+    wheels_separation: float = 0.0          # Wheels separation
+    kr: float = 0.0                         # Unsystematic odometric error
+    kl: float = 0.0                         # Unsystematic odometric error
 
 @dataclass
 class FedEkfSharedData:
@@ -56,10 +60,14 @@ class FedEkf:
         self.n_phi_max = data.n_phi
         self.sigma_phi = data.sigma_phi
         self.sigma_range = data.sigma_range
+        self.sigma_shared = data.sigma_shared
         self.min_zeros_start_pruning = data.min_zeros_start_pruning
-        self.num_iterations = data.num_iterations
-        self.distance_threshold = data.distance_threshold
-        self.percent_min_inliers = data.percent_min_inliers
+        self.num_iterations_pre = data.num_iterations_pre
+        self.distance_threshold_pre = data.distance_threshold_pre
+        self.percent_min_inliers_pre = data.percent_min_inliers_pre
+        self.num_iterations_post = data.num_iterations_post
+        self.distance_threshold_post = data.distance_threshold_post
+        self.percent_min_inliers_post = data.percent_min_inliers_post
         self.combs = data.combs
         self.min_steps_reset = data.min_steps_reset
         self.wheels_separation = data.wheels_separation
@@ -180,7 +188,9 @@ class FedEkf:
 
             self.innovation[idx_mat:idx_mat+n_phi] = delta_distances
 
-            prob_distances = np.exp(-0.5 * delta_distances**2 / self.sigma_range**2)
+            hyp_var = n_phi * self.sigma_range**2
+
+            prob_distances = np.exp(-0.5 * delta_distances**2 / hyp_var)
             prob_distances = np.maximum(prob_distances, 1e-100)
             self.weights[idx_tag, :n_phi] *= prob_distances
 
@@ -198,7 +208,7 @@ class FedEkf:
 
             # Update Rs matrix
             self.Rs[idx_mat:idx_mat+n_phi, idx_mat:idx_mat+n_phi] = \
-                    np.diag(self.sigma_range**2 / np.maximum(0.0001, lambdas))
+                    np.diag(hyp_var / np.maximum(0.0001, lambdas))
 
         # Update a posteriori estimate
         kalman_gain = multi_dot([self.P, self.H.T, \
@@ -230,7 +240,7 @@ class FedEkf:
         n_tags = self.n_tags
         change = False
 
-        pruning_thr = np.minimum(1e-2, 0.00001 * self.k)
+        pruning_thr = np.minimum(5e-2, 0.00001 * (self.k+1))
 
         # Check if at least min_zeros_start_pruning hypotheses have weights below threshold
         if np.any(self.hyps_steps_start_pruning == 0):
@@ -276,7 +286,10 @@ class FedEkf:
 
                 min_w = 0.9
                 w = np.maximum(min_w, -(1-min_w) / 6000 * self.k + 1)
-                if np.maximum(weight1, weight2) > w and np.abs(phi1 - phi2) < 5 * pi / 180.0:
+                delta = np.mod(np.abs(phi1 - phi2), 2*pi)
+                if delta > pi:
+                    delta = 2*pi - delta
+                if np.maximum(weight1, weight2) > w or delta < 10.0 * pi / 180.0:
                     change = True
                     self.delete_rows_cols(idx_tag, 1 if weight1 > weight2 else 0)
 
@@ -297,10 +310,8 @@ class FedEkf:
             idx_max_weight = np.argmax(self.weights[idx_tag, :])
             phi_max_weight = self.x_hat_slam[3+idx_0+idx_max_weight]
 
-            cos_phi_max_weight, sin_phi_max_weight = np.cos(phi_max_weight), np.sin(phi_max_weight)
-
-            x_hat_tag = x_i + rho_i * cos_phi_max_weight
-            y_hat_tag = y_i + rho_i * sin_phi_max_weight
+            x_hat_tag = x_i + rho_i * np.cos(phi_max_weight)
+            y_hat_tag = y_i + rho_i * np.sin(phi_max_weight)
 
             # Compute variances
             idx_x = 0 + idx_0
@@ -351,8 +362,8 @@ class FedEkf:
                 tags2 = other_robots[robot2].tags_positions
                 _, _, inliers = roma2d(tags1.T, tags2.T,
                                        self.combs,
-                                       self.num_iterations, self.distance_threshold,
-                                       round(self.percent_min_inliers * n_tags))
+                                       self.num_iterations_pre, self.distance_threshold_pre,
+                                       round(self.percent_min_inliers_pre * n_tags))
 
                 if inliers.size > 0:
                     empty = False
@@ -371,8 +382,8 @@ class FedEkf:
             other_robots_tags = other_robots[idx].tags_positions
             R, t, inliers = roma2d(other_robots_tags.T, this_robot.tags_positions.T,
                                    self.combs,
-                                   self.num_iterations, self.distance_threshold,
-                                   round(self.percent_min_inliers * n_tags))
+                                   self.num_iterations_post, self.distance_threshold_post,
+                                   round(self.percent_min_inliers_post * n_tags))
             if inliers.size == 0:
                 to_be_removed.append(idx)
                 continue
@@ -442,16 +453,18 @@ class FedEkf:
 
                     continue
 
-                var = 0.05
-                fused_var_x = var
-                fused_var_y = var
+                # var = 0.05
+                # fused_var_x = var
+                # fused_var_y = var
                 # fused_var_x = 100 * vars(1, idx_tag, idx_pos)
                 # fused_var_y = 100 * vars(2, idx_tag, idx_pos)
                 # fused_var_x = 1 / np.sum(1 / vars[0, idx_tag, :])
                 # fused_var_y = 1 / np.sum(1 / vars[1, idx_tag, :])
+                # sigma_x = np.sqrt(fused_var_x)
+                # sigma_y = np.sqrt(fused_var_y)
 
-                sigma_x = np.sqrt(fused_var_x)
-                sigma_y = np.sqrt(fused_var_y)
+                sigma_x = self.sigma_shared
+                sigma_y = self.sigma_shared
 
                 idx_0 = self.x_hat_cumul_indices[idx_tag+1]
                 x_i, y_i, rho_i = self.x_hat_slam[idx_0:3+idx_0]
@@ -573,7 +586,7 @@ class FedEkf:
 
         self.hyps_steps_start_pruning = np.zeros((self.n_tags, ), dtype=np.uint16)
 
-        # self.min_steps_reset += 
+        # self.min_steps_reset +=
 
         self.n_reset = 0
         self.do_reset = False
