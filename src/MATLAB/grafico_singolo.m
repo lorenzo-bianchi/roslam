@@ -18,13 +18,13 @@ for idx = 1:2
         if ~isempty(tResets{robot})
             posGlob = zeros(3, nPassi);
             
-            tResetVect = [0, tResets{robot}, nPassi];
+            tResetVect = [1, tResets{robot}, nPassi];
             for t_idx = 1:length(tResetVect)-1
                 t0 = tResetVect(t_idx);
                 t1 = tResetVect(t_idx+1);
     
                 T = TsGL{robot}(:, :, t_idx);
-                posGlob(:, t0+1:t1) = T*posLoc(:, t0+1:t1);
+                posGlob(:, t0:t1) = T*posLoc(:, t0:t1);
             end        
         else
             posGlob = TsGL{robot}(:, :, 1)*posLoc;
@@ -41,6 +41,9 @@ for idx = 1:2
     end
     if pruning
         for i = 1:length(stepStartPruning{robot})
+            if stepStartPruning{robot}(i) > t_max
+                continue
+            end
             if i == 1
                 xline(stepStartPruning{robot}(i), '--k', 'LineWidth', 1, 'DisplayName', 'Pruning');
             else

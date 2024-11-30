@@ -1,5 +1,5 @@
 for robot = 1:nRobot
-    figure(robot)
+    figure
     hold off
 
     plot([0 L], [0 0], 'k', 'Linewidth', 2)
@@ -8,7 +8,7 @@ for robot = 1:nRobot
     plot([0 0], [0 L], 'k', 'Linewidth', 2)
     plot([L L], [0 L], 'k', 'Linewidth', 2)
     for indTag = 1:nTag
-        text(cTag(indTag,1) + 0.2, cTag(indTag,2), num2str(indTag), 'FontSize', 12);
+        text(cTag(indTag,1) + 0.2, cTag(indTag,2), num2str(indTag), 'FontSize', 12, 'Color', 'red');
         plot(cTag(indTag,1), cTag(indTag,2), 'rh', 'Linewidth', 2, 'MarkerSize', 12);
     end
 
@@ -19,7 +19,7 @@ for robot = 1:nRobot
     plot(xVett(1), yVett(1), 'k^', 'Linewidth', 2)  % pos iniziale
     plot(xVett(end), yVett(end), 'ks', 'Linewidth', 2) % pos finale
 
-    title(num2str(k))
+    title(sprintf('Robot %d, step %d', robot, num2str(k)));
     plot(xVett(max(1,k-30):k), yVett(max(1,k-30):k), 'k', 'LineWidth', 2)   % traccia
     plot(xVett(k), yVett(k), 'ko')  % pos attuale vera
 

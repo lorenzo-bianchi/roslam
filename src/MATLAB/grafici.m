@@ -41,6 +41,7 @@ if DISEGNA_PLOT
 end
 
 if DISEGNA_ICP
+    %%
     for robot = 1:nRobot
         cTagHat = [ekfs(robot).xHatTagStoria(:, end) ekfs(robot).yHatTagStoria(:, end)];
         [R1, t1] = icp2D(cTag, cTagHat);
@@ -63,7 +64,7 @@ end
 
 if DISEGNA_VAR
     %%
-    robot = 3;
+    robot = 7;
 
     t0 = 1;
     tf = nPassi;
@@ -83,6 +84,7 @@ if DISEGNA_VAR
         % plot(t, sqrt(var_x.^2 + var_y.^2), 'k', 'LineWidth', 1.5, 'DisplayName', 'var_tot')
         xlabel('simulation step');
         ylabel('[m]');
+        sgtitle(sprintf('Std. deviation robot %d, tag %d', robot, tag), 'FontSize', 16)
     end
 end
 
