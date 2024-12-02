@@ -23,9 +23,13 @@ def init_parameters(self):
                     ('n_tags', 0),
                     ('n_phi', 0),
                     ('sigma_range', 0.0),
-                    ('num_iterations', 0),
-                    ('distance_threshold', 0.0),
-                    ('percent_min_inliers', 0.0),
+                    ('sigma_shared', 0.0),
+                    ('roma2D.num_iterations_pre', 0),
+                    ('roma2D.distance_threshold_pre', 0.0),
+                    ('roma2D.percent_min_inliers_pre', 0.0),
+                    ('roma2D.num_iterations_post', 0),
+                    ('roma2D.distance_threshold_post', 0.0),
+                    ('roma2D.percent_min_inliers_post', 0.0),
                     ('kr', 0.0),
                     ('kl', 0.0),
                     ('min_steps_reset', 0),
@@ -49,9 +53,13 @@ def init_parameters(self):
     self.n_tags = self.get_parameter('n_tags').value
     self.n_phi = self.get_parameter('n_phi').value
     self.sigma_range = self.get_parameter('sigma_range').value
-    self.num_iterations = self.get_parameter('num_iterations').value
-    self.distance_threshold = self.get_parameter('distance_threshold').value
-    self.percent_min_inliers = self.get_parameter('percent_min_inliers').value
+    self.sigma_shared = self.get_parameter('sigma_shared').value
+    self.num_iterations_pre = self.get_parameter('roma2D.num_iterations_pre').value
+    self.distance_threshold_pre = self.get_parameter('roma2D.distance_threshold_pre').value
+    self.percent_min_inliers_pre = self.get_parameter('roma2D.percent_min_inliers_pre').value
+    self.num_iterations_post = self.get_parameter('roma2D.num_iterations_post').value
+    self.distance_threshold_post = self.get_parameter('roma2D.distance_threshold_post').value
+    self.percent_min_inliers_post = self.get_parameter('roma2D.percent_min_inliers_post').value
     self.kr = self.get_parameter('kr').value
     self.kl = self.get_parameter('kl').value
     self.min_steps_reset = self.get_parameter('min_steps_reset').value
@@ -74,6 +82,10 @@ def init_parameters(self):
     self.get_logger().info(f'n_tags: {self.n_tags}')
     self.get_logger().info(f'n_phi: {self.n_phi}')
     self.get_logger().info(f'sigma_range: {self.sigma_range}')
-    self.get_logger().info(f'num_iterations: {self.num_iterations}')
-    self.get_logger().info(f'distance_threshold: {self.distance_threshold}')
-    self.get_logger().info(f'percent_min_inliers: {self.percent_min_inliers}')
+    self.get_logger().info(f'sigma_shared: {self.sigma_shared}')
+    self.get_logger().info(f'num_iterations_pre: {self.num_iterations_pre}')
+    self.get_logger().info(f'distance_threshold_pre: {self.distance_threshold_pre}')
+    self.get_logger().info(f'percent_min_inliers_pre: {self.percent_min_inliers_pre}')
+    self.get_logger().info(f'num_iterations_post: {self.num_iterations_post}')
+    self.get_logger().info(f'distance_threshold_post: {self.distance_threshold_post}')
+    self.get_logger().info(f'percent_min_inliers_post: {self.percent_min_inliers_post}')

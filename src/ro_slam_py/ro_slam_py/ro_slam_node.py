@@ -55,18 +55,24 @@ class ROSlamNode(Node):
         self.data.n_phi = self.n_phi
         self.data.sigma_phi = 2 * pi / (1.5 * self.n_phi)
         self.data.sigma_range = self.sigma_range
-        self.data.min_zeros_start_pruning = ceil(0.6 * self.n_phi)
-        self.data.num_iterations = self.num_iterations
-        self.data.distance_threshold = self.distance_threshold
-        self.data.percent_min_inliers = self.percent_min_inliers
+        self.data.sigma_shared = self.sigma_shared
+        self.data.min_zeros_start_pruning = ceil(0.3 * self.n_phi)
+        self.data.num_iterations_pre = self.num_iterations_pre
+        self.data.distance_threshold_pre = self.distance_threshold_pre
+        self.data.percent_min_inliers_pre = self.percent_min_inliers_pre
+        self.data.num_iterations_post = self.num_iterations_post
+        self.data.distance_threshold_post = self.distance_threshold_post
+        self.data.percent_min_inliers_post = self.percent_min_inliers_post
         self.data.wheels_separation = self.wheels_separation
         self.data.kr = self.kr
         self.data.kl = self.kl
         self.data.min_steps_reset = self.min_steps_reset
         self.data.min_tags_after_reset = self.min_tags_after_reset
 
-        if len(self.uwb_id_order) > 0:
+        if self.uwb_id_order[0] != '':
             self.uwb_idx = {uwb_id: idx for idx, uwb_id in enumerate(self.uwb_id_order)}
+        else:
+            self.uwb_idx = {}
 
         self.data.combs = minimize_conflicts(self.data.n_tags, 3, initial_shuffle=False)
         from itertools import combinations
