@@ -11,10 +11,12 @@
 
   <depend>joy2cmdvel</depend>
   <depend>joystick</depend>
-  <depend>ro_slam_interfaces</depend>
   <depend>ro_slam_py</depend>
-  <depend>robot_sim</depend>
+  <depend>ro_slam_interfaces</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>tf2_ros</depend>
   <depend>uwb_driver</depend>
+  <depend>uwb_parser</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
