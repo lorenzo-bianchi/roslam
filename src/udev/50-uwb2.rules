@@ -1,4 +1,0 @@
-# set the udev rule, make the device_port be fixed by uwb2
-#
-KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760184304", MODE:="0777", SYMLINK+="uwb2"
-

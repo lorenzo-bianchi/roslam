@@ -1,0 +1,7 @@
+#
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760161012", MODE:="0777", SYMLINK+="uwb-R1-M1-T1"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760160827", MODE:="0777", SYMLINK+="uwb-R1-M2-T1"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760161017", MODE:="0777", SYMLINK+="uwb-R2-M1-T2"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760157761", MODE:="0777", SYMLINK+="uwb-R2-M2-A2"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760160993", MODE:="0777", SYMLINK+="uwb-R2-M3-T2"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="0105", ATTRS{serial}=="000760160967", MODE:="0777", SYMLINK+="uwb-R3-M1-T3"
