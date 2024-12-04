@@ -32,22 +32,19 @@ def uwb_array_clbk(self, msg: UwbArray):
         distances = np.zeros((msg.anchor_num, ))
         for anchor in msg.uwbs:
             distances[anchor.id] = anchor.dist
-    print(distances)
 
     tic = time.time()
     self.fed_ekf.correction(distances)
     print(f"Correction time: {time.time() - tic}")
 
-    print()
-    print(self.fed_ekf.k + 1)
-
-    if self.use_pruning and self.fed_ekf.k >= self.min_step_start_pruning - 1:
+    if self.pruning_enable:
         self.fed_ekf.pruning()
 
     # Get new tags poses after correction and pruning
     self.tags_poses = self.fed_ekf.get_tags_poses()
 
-    if self.use_sharing and self.fed_ekf.k >= self.min_step_start_sharing - 1:
+    # Share data
+    if self.sharing_enable and self.fed_ekf.k >= self.sharing_min_step_to_start - 1:
         if np.all(self.tags_poses['last_hyp']):
             if self.actual_step_start_sharing == -1:
                 self.actual_step_start_sharing = self.fed_ekf.k
@@ -65,13 +62,12 @@ def uwb_array_clbk(self, msg: UwbArray):
                 landmark.cov_xy = float(tag['cov_xy'])
                 landmark_array_msg.landmarks.append(landmark)
             self.landmark_pub.publish(landmark_array_msg)
-
-    self.publish_tags()
+        self.publish_tags()
 
     self.broadcast_pose()
 
-    print(self.fed_ekf.x_hat_slam)
     print(self.fed_ekf.weights)
+    print()
 
 
 def odometry_clbk(self, msg: JointState):
@@ -81,6 +77,8 @@ def odometry_clbk(self, msg: JointState):
     if len(msg.name) != 2:
         self.get_logger().error('Invalid JointState message')
         return
+
+    print(self.fed_ekf.k + 2)
 
     if 'right' in msg.name[0]:
         right_idx = 0
@@ -92,11 +90,17 @@ def odometry_clbk(self, msg: JointState):
     vel_wheel_right = msg.velocity[right_idx] * self.wheel_radius
     vel_wheel_left = msg.velocity[left_idx] * self.wheel_radius
 
+    if abs(vel_wheel_left) < 1e-5 and abs(vel_wheel_right) < 1e-5:  # TODO: check this threshold
+        return
+
     tic = time.time()
     self.fed_ekf.prediction(vel_wheel_right, vel_wheel_left)
     print(f"Prediction time: {time.time() - tic}")
 
     self.broadcast_pose()
+
+    print(self.fed_ekf.x_hat_slam)
+    print()
 
 
 def landmark_array_clbk(self, msg: LandmarkArray):
@@ -133,13 +137,11 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
         profiler.disable()
         profiler.dump_stats(f'logs/profiler_{self.fed_ekf.k}.prof')
 
-        if self.use_pruning and self.fed_ekf.k >= self.min_step_start_pruning - 1:
+        if self.pruning_enable:
             self.fed_ekf.pruning()
 
-        if self.use_reset and self.fed_ekf.do_reset:
+        if self.reset_enable and self.fed_ekf.do_reset:
             # TODO: find a way to get real position at reset
-            self.min_step_start_pruning += self.fed_ekf.k + 1
-            # self.min_step_start_sharing += self.fed_ekf.k
 
             time_reset = self.get_clock().now().nanoseconds
             self.get_logger().info(f'Robot {self.robot_id} resetting at t = {time_reset}')
@@ -161,5 +163,3 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
     data.tags_vars = tags_vars
 
     self.shared_data = np.append(self.shared_data, data)
-
-# TODO: substitute self.min_step_start_pruning with self.fed_ekf.min_steps_reset

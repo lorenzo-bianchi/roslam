@@ -15,7 +15,7 @@ end
 main_simulazione;
 
 %% Calcolo distanze vere e stimate tag-tag e tag-robot (errori SLAM relativi)
-displayErrori = 1;oasi?
+displayErrori = 1;
 calcolo_errori;
 
 %% Grafici

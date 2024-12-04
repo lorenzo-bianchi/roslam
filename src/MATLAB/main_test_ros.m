@@ -1,8 +1,9 @@
 clc; clear; close all;
 load('percorsi.mat', 'percorsi');
-seed = 41;
+seed = 47;
 
 nRobot = 6;
+Nstep = 5;
 
 %% PARAMETRI
 data = struct();
@@ -13,11 +14,11 @@ nTag = 10;
 nPhi = 8; % numero ipotesi angolo (si può poi variare in funzione della distanza misurata)
 pruning = 1;
 minZerosStartPruning = ceil(nPhi*0.3);
-stepStartPruning0 = 100;         % mettere valore piccolo per evitare errori iniziali
+stepStartPruning0 = 10;         % mettere valore piccolo per evitare errori iniziali
 stepStartPruning = repmat({stepStartPruning0}, 1, nRobot);
-sharing = 0;
+sharing = 1;
 stepStartSharing = 400;
-reset = 0;
+reset = 1;
 resetThr = 10;
 
 sigmaDistanza = 0.3; % std in m della misura di range
@@ -79,7 +80,6 @@ cTag = 0.9*L*rand(nTag, 2) + 0.05*L;
 rng(seed);
 
 curr_robot = 1;
-nRobot = 6;
 
 startSharing = -1 * ones(1, nRobot);
 
@@ -116,10 +116,11 @@ rng(seed);
 pause(1)
 
 pause_sleep = 0.05;
-stops = [600];
+stops = [];
 for iter = 1:1000
     k = k + 1;
     disp(k)
+    % pause()
 
     for robot = 1:nRobot
         % PREDIZIONE
@@ -138,84 +139,89 @@ for iter = 1:1000
         end    
         ekfs(robot).prediction(uRe, uLe);
 
-        % CORREZIONE
-        if mod(k, 1) ~= 0
-            continue
-        end
-
-        x = percorsi(k, 1, robot);
-        y = percorsi(k, 2, robot);
-        misureRange = sqrt((x-cTag(:,1)).^2+(y-cTag(:,2)).^2) + sigmaDistanza*randn;
-
-        if robot == curr_robot
-            for i = 1:nTag
-                uwb_msg.uwbs(i).header = uwb_msg.header;
-                uwb_msg.uwbs(i).id = int8(i-1);
-                uwb_msg.uwbs(i).id_str = num2str(i-1);
-                uwb_msg.uwbs(i).dist = single(misureRange(i));
-                uwb_msg.uwbs(i).x = single(0);
-                uwb_msg.uwbs(i).y = single(0);
-                uwb_msg.uwbs(i).z = single(0);
-            end
-            send(uwb_pub, uwb_msg);
-            pause(pause_sleep)
-        end
-
-        ekfs(robot).correction(misureRange);
-
-        if pruning && k >= stepStartPruning{robot}(end)
-            ekfs(robot).pruning();
-        end
-    
-        ekfs(robot).save_history();
-
         if robot == curr_robot
             disp(ekfs(robot).xHatSLAM(:, k+1)')
-            disp(ekfs(robot).pesi)
+            disp('')
         end
+
+        % CORREZIONE
+        if mod(k, Nstep) == 0
+            x = percorsi(k, 1, robot);
+            y = percorsi(k, 2, robot);
+            misureRange = sqrt((x-cTag(:,1)).^2+(y-cTag(:,2)).^2) + sigmaDistanza*randn;
+
+            if robot == curr_robot
+                for i = 1:nTag
+                    uwb_msg.uwbs(i).header = uwb_msg.header;
+                    uwb_msg.uwbs(i).id = int8(i-1);
+                    uwb_msg.uwbs(i).id_str = num2str(i-1);
+                    uwb_msg.uwbs(i).dist = single(misureRange(i));
+                    uwb_msg.uwbs(i).x = single(0);
+                    uwb_msg.uwbs(i).y = single(0);
+                    uwb_msg.uwbs(i).z = single(0);
+                end
+                send(uwb_pub, uwb_msg);
+                pause(pause_sleep)
+            end
+
+            ekfs(robot).correction(misureRange);
+
+            if pruning && k >= stepStartPruning{robot}(end)
+                ekfs(robot).pruning();
+            end
+
+            if robot == curr_robot
+                disp(ekfs(robot).pesi)
+                disp('')
+            end
+        end
+
+        ekfs(robot).save_history();
     end
 
     % CORREZIONE con altre misure
-    if sharing && k > stepStartSharing
-        sharedInfoArray = struct('id', {}, 'tags', {}, 'vars', {});
-        for robot = 1:nRobot
-            if sum(ekfs(robot).nPhiVett) == nTag
-                if startSharing(robot) == -1
-                    startSharing(robot) = k;
-                end
-                sharedInfoArray(end+1) = ekfs(robot).data_to_share();
-            end
-        end
-
-        if ~isempty(sharedInfoArray)
+    if mod(k, Nstep) == 0
+        if sharing && k > stepStartSharing
+            sharedInfoArray = struct('id', {}, 'tags', {}, 'vars', {});
             for robot = 1:nRobot
-                if robot == curr_robot
-                    for i = 1:size(sharedInfoArray, 2)
-                        shared_data_msg.id = uint8(sharedInfoArray(i).id);
-                        for idx_tag = 1:nTag
-                            shared_data_msg.landmarks(idx_tag).x = double(sharedInfoArray(i).tags(1, idx_tag));
-                            shared_data_msg.landmarks(idx_tag).y = double(sharedInfoArray(i).tags(2, idx_tag));
-
-                            shared_data_msg.landmarks(idx_tag).var_x =  double(sharedInfoArray(i).vars(1, idx_tag));
-                            shared_data_msg.landmarks(idx_tag).var_y =  double(sharedInfoArray(i).vars(2, idx_tag));
-                            shared_data_msg.landmarks(idx_tag).cov_xy = double(sharedInfoArray(i).vars(3, idx_tag));
+                if sum(ekfs(robot).nPhiVett) == nTag
+                    if startSharing(robot) == -1
+                        startSharing(robot) = k;
+                    end
+                    sharedInfoArray(end+1) = ekfs(robot).data_to_share();
+                end
+            end
+    
+            if ~isempty(sharedInfoArray)
+                for robot = 1:nRobot
+                    if robot == curr_robot
+                        for i = 1:size(sharedInfoArray, 2)
+                            shared_data_msg.id = uint8(sharedInfoArray(i).id);
+                            for idx_tag = 1:nTag
+                                shared_data_msg.landmarks(idx_tag).x = double(sharedInfoArray(i).tags(1, idx_tag));
+                                shared_data_msg.landmarks(idx_tag).y = double(sharedInfoArray(i).tags(2, idx_tag));
+    
+                                shared_data_msg.landmarks(idx_tag).var_x =  double(sharedInfoArray(i).vars(1, idx_tag));
+                                shared_data_msg.landmarks(idx_tag).var_y =  double(sharedInfoArray(i).vars(2, idx_tag));
+                                shared_data_msg.landmarks(idx_tag).cov_xy = double(sharedInfoArray(i).vars(3, idx_tag));
+                            end
+                            send(shared_data_pub, shared_data_msg);
+                            pause(pause_sleep)
                         end
+                        shared_data_msg.id = uint8(100);
                         send(shared_data_pub, shared_data_msg);
                         pause(pause_sleep)
                     end
-                    shared_data_msg.id = uint8(100);
-                    send(shared_data_pub, shared_data_msg);
-                    pause(pause_sleep)
-                end
-    
-                ekfs(robot).correction_shared(sharedInfoArray);
-                if pruning && k >= stepStartPruning{robot}(end)
-                    ekfs(robot).pruning();
-                end
-                if ekfs(robot).do_reset
-                    fprintf('Robot %d resetting at t=%d\n', robot, k)
-                    stepStartPruning{robot}(end+1) = stepStartPruning{robot}(end) + k;
-                    ekfs(robot).reset();
+        
+                    ekfs(robot).correction_shared(sharedInfoArray);
+                    if pruning && k >= stepStartPruning{robot}(end)
+                        ekfs(robot).pruning();
+                    end
+                    if ekfs(robot).do_reset
+                        fprintf('Robot %d resetting at t=%d\n', robot, k)
+                        stepStartPruning{robot}(end+1) = stepStartPruning{robot}(end) + k;
+                        ekfs(robot).reset();
+                    end
                 end
             end
         end

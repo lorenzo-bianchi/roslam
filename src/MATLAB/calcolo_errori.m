@@ -6,6 +6,8 @@ distanzeInterTagVere = zeros(nRobot, nTag*(nTag-1)/2);
 distanzeInterTagStimate = zeros(nRobot, nTag*(nTag-1)/2);
 erroriAssolutiTag = zeros(nRobot, nTag);
 erroriMediPostICP = zeros(1, nRobot);
+erroriMediTagGlobali = zeros(1, nRobot);
+erroriPosGlobale = zeros(1, nRobot);
 
 for robot = 1:nRobot
     xVett = percorsi(:, 1, robot);
@@ -47,6 +49,29 @@ for robot = 1:nRobot
         temp = temp(1:2, :);
         erroriMediPostICP(robot) = mean(vecnorm(cTag' - temp));
     end
+
+    if sharing
+        ids = global_poses(robot).ids;
+        point1 = cTag(ids(1), :);
+        point2 = cTag(ids(2), :);
+
+        t = point1;
+        s = (point2(2)-point1(2)) / norm(point2-point1);
+        c = (point2(1)-point1(1)) / norm(point2-point1);
+        T = [c -s t(1); s c t(2); 0 0 1]^-1;
+
+        transformed_tags = T * [cTag'; ones(1, nTag)];
+
+        delta = transformed_tags(1:2, :) - global_poses(robot).tags;
+        global_errors_tags = sqrt(delta(1, :).^2 + delta(2, :).^2);
+
+        mask = true(size(global_errors_tags));
+        mask(ids) = false;
+        erroriMediTagGlobali(robot) = mean(global_errors_tags(mask));
+
+        transformed_pos = T * [percorsi(k, 1:2, robot)'; 1];
+        erroriPosGlobale(robot) = norm(transformed_pos(1:2) - global_poses(robot).pose(1:2, :));
+    end
     
     if displayErrori
         fprintf("Robot %d:\n", robot);
@@ -85,6 +110,14 @@ for robot = 1:nRobot
         fprintf("\n\n");
         fprintf("\tMedia distanze tag post ICP: ")
         fprintf("%.3f ", erroriMediPostICP);
-        fprintf("\n");
+        fprintf("\n\n");
+        if sharing
+            fprintf("\tErrori tag post globalize: ")
+            fprintf("%.3f ", global_errors_tags);
+            fprintf("\n");
+            fprintf("\tErrore robot post globalize: ")
+            fprintf("%.3f ", erroriPosGlobale(robot));
+            fprintf("\n");
+        end
     end
 end

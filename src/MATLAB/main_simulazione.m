@@ -34,6 +34,8 @@ for k = 2:nPassi
             misureRange = sqrt((x-cTag(:,1)).^2+(y-cTag(:,2)).^2) + sigmaDistanza*randn;
             ekfs(robot).correction(misureRange);
 
+            ekfs(robot).save_history();
+
             if pruning && k >= stepStartPruning{robot}(end)
                 ekfs(robot).pruning();
             end
@@ -43,38 +45,48 @@ for k = 2:nPassi
         ekfs(robot).save_history();
     end
 
-    % CORREZIONE con altre misure
-    if sharing && k > stepStartSharing
-        sharedInfoArray = struct('id', {}, 'tags', {}, 'vars', {});
-        for robot = 1:nRobot
-            if sum(ekfs(robot).nPhiVett) == nTag
-                if startSharing(robot) == -1
-                    startSharing(robot) = k;
-                end
-                sharedInfoArray(end+1) = ekfs(robot).data_to_share();
-            end
-        end
-
-        if ~isempty(sharedInfoArray)
+    if mod(k, Nstep) == 0
+        % CORREZIONE con altre misure
+        if sharing && k > stepStartSharing
+            sharedInfoArray = struct('id', {}, 'tags', {}, 'vars', {});
             for robot = 1:nRobot
-                ekfs(robot).correction_shared(sharedInfoArray);
-                if pruning && k >= stepStartPruning{robot}(end)
-                    ekfs(robot).pruning();
+                if sum(ekfs(robot).nPhiVett) == nTag
+                    if startSharing(robot) == -1
+                        startSharing(robot) = k;
+                    end
+                    sharedInfoArray(end+1) = ekfs(robot).data_to_share();
                 end
-                if ekfs(robot).do_reset
-                    fprintf('Robot %d resetting at t=%d\n', robot, k)
-                    stepStartPruning{robot}(end+1) = stepStartPruning{robot}(end) + k;
-                    ekfs(robot).reset();
-                    tResets{robot}(end+1) = k;
-
-                    x0 = percorsi(k, 1, robot);
-                    y0 = percorsi(k, 2, robot);
-                    theta0 = percorsi(k, 3, robot);
-                    TsGL{robot}(:, :, end+1) = [[cos(theta0) -sin(theta0) x0]; [sin(theta0) cos(theta0) y0]; [0 0 1]];
-                    TsLG{robot}(:, :, end+1) = [[cos(theta0) -sin(theta0) x0]; [sin(theta0) cos(theta0) y0]; [0 0 1]]^-1;
+            end
+    
+            if ~isempty(sharedInfoArray)
+                for robot = 1:nRobot
+                    ekfs(robot).correction_shared(sharedInfoArray);
+                    if pruning && k >= stepStartPruning{robot}(end)
+                        ekfs(robot).pruning();
+                    end
+                    if ekfs(robot).do_reset
+                        fprintf('Robot %d resetting at t=%d\n', robot, k)
+                        stepStartPruning{robot}(end+1) = stepStartPruning0 + k;
+                        ekfs(robot).reset();
+                        tResets{robot}(end+1) = k;
+    
+                        x0 = percorsi(k, 1, robot);
+                        y0 = percorsi(k, 2, robot);
+                        theta0 = percorsi(k, 3, robot);
+                        TsGL{robot}(:, :, end+1) = [[cos(theta0) -sin(theta0) x0]; [sin(theta0) cos(theta0) y0]; [0 0 1]];
+                        TsLG{robot}(:, :, end+1) = [[cos(theta0) -sin(theta0) x0]; [sin(theta0) cos(theta0) y0]; [0 0 1]]^-1;
+                    end
                 end
             end
         end
     end
 end
 fprintf("Tempo impiegato: %f s:\n", toc);
+
+%%
+global_poses = struct('ids', {}, 'use_avg', {}, 'pose', {}, 'tags', {});
+if sharing && ~isempty(sharedInfoArray)
+    for robot = 1:nRobot
+        global_poses(end+1) = ekfs(robot).globalize(sharedInfoArray);
+    end
+end

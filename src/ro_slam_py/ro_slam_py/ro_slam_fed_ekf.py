@@ -2,6 +2,7 @@ import numpy as np
 from numpy import pi, ceil
 from numpy.linalg import multi_dot, pinv
 from dataclasses import dataclass
+from collections import deque
 
 from .ro_slam_roma2d import roma2d
 
@@ -20,6 +21,10 @@ class FedEkfData:
     sigma_shared: float = 0.0               # Shared measurement standard deviation
     # Pruning
     min_zeros_start_pruning: int = 0        # Minimum number of zeros to start pruning
+    dim_deque: int = 0                      # Dimension of deque
+    pruning_min_step_to_start: int = 0      # Minimum number of step to start pruning
+    # Sharing
+    sharing_min_step_to_start: int = 0      # Minimum number of step to start sharing
     # RoMa2D parameters
     num_iterations_pre: int = 0             # Number of iterations
     distance_threshold_pre: float = 0.0     # Distance threshold
@@ -29,8 +34,8 @@ class FedEkfData:
     percent_min_inliers_post: float = 0.0   # Minimum percentage of inliers
     combs: list = None                      # List of all combinations
     # Reset parameters
-    min_steps_reset: int = 0                # Minimum numbers of steps to reset
-    min_tags_after_reset: int = 0           # Minimum number of converged tags after reset
+    reset_min_steps: int = 0                # Minimum numbers of steps to reset
+    reset_min_tags_converged: int = 0       # Minimum number of converged tags after reset
     #
     wheels_separation: float = 0.0          # Wheels separation
     kr: float = 0.0                         # Unsystematic odometric error
@@ -51,9 +56,9 @@ class FedEkf:
 
         # Initialize variables
         self.k = -1
-        self.n_reset = 0
-        self.do_reset = False
         self.first_correction = True
+        self.do_reset = False
+        self.reset_counter = 0
 
         # Get values from data
         self.n_tags = data.n_tags
@@ -69,13 +74,18 @@ class FedEkf:
         self.distance_threshold_post = data.distance_threshold_post
         self.percent_min_inliers_post = data.percent_min_inliers_post
         self.combs = data.combs
-        self.min_steps_reset = data.min_steps_reset
+        self.reset_min_steps = data.reset_min_steps
         self.wheels_separation = data.wheels_separation
         self.kr = data.kr
         self.kl = data.kl
-        self.min_tags_after_reset = data.min_tags_after_reset
+        self.reset_min_tags_converged = data.reset_min_tags_converged
+        self.pruning_min_step_to_start = data.pruning_min_step_to_start
+        self.sharing_min_step_to_start = data.sharing_min_step_to_start
 
         self.phi_angles = np.linspace(-pi + 2 * pi / self.n_phi_max, pi, self.n_phi_max)
+
+        self.dim_deque = data.dim_deque
+        self.vars_deque = deque(maxlen=data.dim_deque)
 
         # Define matrices
         dim_h = 3 + self.n_phi_max              # hypothesis dimension
@@ -236,26 +246,83 @@ class FedEkf:
         self.P = np.delete(np.delete(self.P, i, axis=0), i, axis=1)
         self.x_hat_slam = np.delete(self.x_hat_slam, i, axis=0)
 
+    def update_deque(self):
+        tags_poses = self.get_tags_poses()
+        vars = np.zeros((self.n_tags, 2), dtype=mtype)
+        for idx_tag in range(self.n_tags):
+            var_x = tags_poses[idx_tag]['var_x']
+            var_y = tags_poses[idx_tag]['var_y']
+            vars[idx_tag, :] = [var_x, var_y]
+
+        if len(self.vars_deque) != 0 and np.linalg.norm(vars - self.vars_deque[-1]) < 1e-10:
+            return
+
+        self.vars_deque.append(vars)
+
     def pruning(self):
+        if self.k < self.pruning_min_step_to_start - 1:
+            self.update_deque()
+            return
+
+        if self.k == 719:
+            a = 1
+
         n_tags = self.n_tags
         change = False
 
         pruning_thr = np.minimum(5e-2, 0.00001 * (self.k+1))
 
-        # Check if at least min_zeros_start_pruning hypotheses have weights below threshold
+        # Check if at least hyps_steps_start_pruning hypotheses have weights below threshold
         if np.any(self.hyps_steps_start_pruning == 0):
+            self.update_deque()
+
             for idx_tag in range(n_tags):
                 if self.hyps_steps_start_pruning[idx_tag] > 0:
                     continue
 
-                n_phi = self.n_phi_vett[idx_tag]
-                n_zeros = 0
-                for idx_phi in range(n_phi):
-                    if self.weights[idx_tag, idx_phi] < pruning_thr / n_phi:
-                        n_zeros += 1
+                if True:
+                    if len(self.vars_deque) < self.vars_deque.maxlen:
+                        return
 
-                if n_zeros >= self.min_zeros_start_pruning:
-                    self.hyps_steps_start_pruning[idx_tag] = self.k
+                    vars = np.array(self.vars_deque)
+                    vars_x = vars[:, idx_tag, 0]
+                    vars_y = vars[:, idx_tag, 1]
+
+                    sigma_x = np.sqrt(vars_x)
+                    sigma_y = np.sqrt(vars_y)
+
+                    grad_sigma_x = np.diff(sigma_x)
+                    grad_sigma_y = np.diff(sigma_y)
+
+                    filtro_finestra = 6
+                    kernel = np.ones((filtro_finestra, )) / filtro_finestra
+
+                    grad_sigma_x_filtered = np.zeros_like(grad_sigma_x)
+                    grad_sigma_y_filtered = np.zeros_like(grad_sigma_y)
+
+                    for i in range(len(grad_sigma_x)):
+                        for j in range(filtro_finestra):
+                            if i - j + 1 > 0:
+                                grad_sigma_x_filtered[i] += kernel[j] * grad_sigma_x[i - j]
+                                grad_sigma_y_filtered[i] += kernel[j] * grad_sigma_y[i - j]
+
+                    grad_sigma_x = grad_sigma_x_filtered
+                    grad_sigma_y = grad_sigma_y_filtered
+
+                    diff_thr = 1e-5
+                    decreasing = (grad_sigma_x < diff_thr) & (grad_sigma_y < diff_thr)
+
+                    if np.all(decreasing):
+                        self.hyps_steps_start_pruning[idx_tag] = self.k
+                else:
+                    n_phi = self.n_phi_vett[idx_tag]
+                    n_zeros = 0
+                    for idx_phi in range(n_phi):
+                        if self.weights[idx_tag, idx_phi] < pruning_thr / n_phi:
+                            n_zeros += 1
+
+                    if n_zeros >= self.min_zeros_start_pruning:
+                        self.hyps_steps_start_pruning[idx_tag] = self.k
 
         for idx_tag in range(n_tags):
             if self.hyps_steps_start_pruning[idx_tag] == 0:
@@ -304,43 +371,80 @@ class FedEkf:
         tags_poses = np.zeros((n_tags, ), dtype=pose_type)
         for idx_tag in range(n_tags):
             n_phi = self.n_phi_vett[idx_tag]
+
             idx_0 = self.x_hat_cumul_indices[idx_tag+1]
-            x_i, y_i, rho_i = self.x_hat_slam[idx_0:idx_0+3]
-
-            idx_max_weight = np.argmax(self.weights[idx_tag, :])
-            phi_max_weight = self.x_hat_slam[3+idx_0+idx_max_weight]
-
-            x_hat_tag = x_i + rho_i * np.cos(phi_max_weight)
-            y_hat_tag = y_i + rho_i * np.sin(phi_max_weight)
-
-            # Compute variances
             idx_x = 0 + idx_0
             idx_y = 1 + idx_0
             idx_r = 2 + idx_0
-            idx_p = 3 + idx_0 + idx_max_weight
+            idx_p = 3 + idx_0
 
+            x_i = self.x_hat_slam[idx_x]
+            y_i = self.x_hat_slam[idx_y]
             rho_i = self.x_hat_slam[idx_r]
-            phi_ij = self.x_hat_slam[idx_p]
-            cos_phi_ij, sin_phi_ij = np.cos(phi_ij), np.sin(phi_ij)
 
-            var_x0  = self.P[idx_x, idx_x]
-            var_y0  = self.P[idx_y, idx_y]
-            var_rho = self.P[idx_r, idx_r]
-            var_phi = self.P[idx_p, idx_p]
+            var_xi  = self.P[idx_x, idx_x]
+            var_yi  = self.P[idx_y, idx_y]
+            var_rhoi = self.P[idx_r, idx_r]
 
-            cov_x_rho   = self.P[idx_x, idx_r]
-            cov_x_phi   = self.P[idx_x, idx_p]
-            cov_y_rho   = self.P[idx_y, idx_r]
-            cov_y_phi   = self.P[idx_y, idx_p]
-            cov_rho_phi = self.P[idx_r, idx_p]
+            cov_x_rho = self.P[idx_x, idx_r]
+            cov_y_rho = self.P[idx_y, idx_r]
 
-            var_x = var_x0 + cos_phi_ij**2 * var_rho + rho_i**2 * sin_phi_ij**2 * var_phi + \
-                    2 * cos_phi_ij * cov_x_rho - 2 * rho_i * sin_phi_ij * cov_x_phi - \
-                    2 * rho_i * cos_phi_ij * sin_phi_ij * cov_rho_phi
-            var_y = var_y0 + sin_phi_ij**2 * var_rho + rho_i**2 * cos_phi_ij**2 * var_phi + \
-                    2 * sin_phi_ij * cov_y_rho + 2 * rho_i * cos_phi_ij * cov_y_phi + \
-                    2 * rho_i * cos_phi_ij * sin_phi_ij * cov_rho_phi
-            cov_xy = 0.0
+            use_mean = True
+            if use_mean:
+                phi = self.x_hat_slam[idx_p : idx_p + n_phi]
+                weights = self.weights[idx_tag, :n_phi]
+                phi_tag_mean = np.dot(phi, weights)
+
+                x_hat_tag = x_i + rho_i * np.cos(phi_tag_mean)
+                y_hat_tag = y_i + rho_i * np.sin(phi_tag_mean)
+
+                # Compute variances
+                phi = self.x_hat_slam[idx_p : idx_p + n_phi]
+                cos_phi, sin_phi = np.cos(phi), np.sin(phi)
+
+                var_phi = np.diagonal(self.P[idx_p : idx_p + n_phi, idx_p : idx_p + n_phi])
+
+                cov_x_phi   = self.P[idx_x, idx_p : idx_p + n_phi]
+                cov_y_phi   = self.P[idx_y, idx_p : idx_p + n_phi]
+                cov_rho_phi = self.P[idx_r, idx_p : idx_p + n_phi]
+
+                var_x = var_xi + cos_phi**2 * var_rhoi + rho_i**2 * sin_phi**2 * var_phi + \
+                        2 * cos_phi * cov_x_rho - 2 * rho_i * sin_phi * cov_x_phi - \
+                        2 * rho_i * cos_phi * sin_phi * cov_rho_phi
+                var_y = var_yi + sin_phi**2 * var_rhoi + rho_i**2 * cos_phi**2 * var_phi + \
+                        2 * sin_phi * cov_y_rho + 2 * rho_i * cos_phi * cov_y_phi + \
+                        2 * rho_i * cos_phi * sin_phi * cov_rho_phi
+                cov_xy = np.zeros((n_phi, ), dtype=mtype)
+
+                var_x = np.dot(var_x, weights)
+                var_y = np.dot(var_y, weights)
+                cov_xy = np.dot(cov_xy, weights)
+            else:
+                idx_max_weight = np.argmax(self.weights[idx_tag, :])
+                phi_max_weight = self.x_hat_slam[3+idx_0+idx_max_weight]
+
+                x_hat_tag = x_i + rho_i * np.cos(phi_max_weight)
+                y_hat_tag = y_i + rho_i * np.sin(phi_max_weight)
+
+                # Compute variances
+                idx_p += idx_max_weight
+
+                phi = self.x_hat_slam[idx_p]
+                cos_phi, sin_phi = np.cos(phi), np.sin(phi)
+
+                var_phi = self.P[idx_p, idx_p]
+
+                cov_x_phi   = self.P[idx_x, idx_p]
+                cov_y_phi   = self.P[idx_y, idx_p]
+                cov_rho_phi = self.P[idx_r, idx_p]
+
+                var_x = var_xi + cos_phi**2 * var_rhoi + rho_i**2 * sin_phi**2 * var_phi + \
+                        2 * cos_phi * cov_x_rho - 2 * rho_i * sin_phi * cov_x_phi - \
+                        2 * rho_i * cos_phi * sin_phi * cov_rho_phi
+                var_y = var_yi + sin_phi**2 * var_rhoi + rho_i**2 * cos_phi**2 * var_phi + \
+                        2 * sin_phi * cov_y_rho + 2 * rho_i * cos_phi * cov_y_phi + \
+                        2 * rho_i * cos_phi * sin_phi * cov_rho_phi
+                cov_xy = 0.0
 
             last_hyp = True if n_phi == 1 else False
 
@@ -408,14 +512,14 @@ class FedEkf:
 
         # Check reset
         if pos_tags_robot.shape[2] == 0:
-            if np.sum(self.n_phi_vett == 1) >= self.min_tags_after_reset:
+            if np.sum(self.n_phi_vett == 1) >= self.reset_min_tags_converged:
                 if other_robots.shape[0] > 1 or other_robots[0].robot_id != self.id:
-                    self.n_reset += 1
-                if self.n_reset >= self.min_steps_reset:
+                    self.reset_counter += 1
+                if self.reset_counter >= self.reset_min_steps:
                     self.do_reset = True
 
             return
-        self.n_reset = 0
+        self.reset_counter = 0
 
         # vars = (0 * vars + 1);    % FIXME
         # temp = 1 ./ vars;
@@ -586,10 +690,11 @@ class FedEkf:
 
         self.hyps_steps_start_pruning = np.zeros((self.n_tags, ), dtype=np.uint16)
 
-        # self.min_steps_reset +=
-
-        self.n_reset = 0
         self.do_reset = False
+        self.vars_deque.clear()
+        self.reset_counter = 0
+        self.pruning_min_step_to_start += self.k + 1
+        self.sharing_min_step_to_start += self.k + 1
 
 
 # Test case
@@ -605,7 +710,7 @@ if __name__ == '__main__':
     data.num_iterations = 100
     data.distance_threshold = 0.1
     data.percent_min_inliers = 0.7
-    data.min_steps_reset = 100
+    data.reset_min_steps = 100
     data.wheels_separation = 0.16
     data.kr = 0.0001
     data.kl = 0.0001

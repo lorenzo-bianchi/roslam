@@ -15,6 +15,8 @@ distanzeInterTagVereTot = {};
 distanzeInterTagStimateTot = {};
 erroriAssolutiTagTot = {};
 erroriMediPostICPTot = {};
+erroriMediTagGlobaliTot = {};
+erroriPosGlobaliTot = {};
     
 for i = 0:1
     sharing = i;
@@ -45,6 +47,8 @@ for i = 0:1
     distanzeInterTagStimateTot{i+1} = distanzeInterTagStimate;
     erroriAssolutiTagTot{i+1} = erroriAssolutiTag;
     erroriMediPostICPTot{i+1} = erroriMediPostICP;
+    erroriMediTagGlobaliTot{i+1} = erroriMediTagGlobali;
+    erroriPosGlobaliTot{i+1} = erroriPosGlobale;
 
     fprintf('\n')
 end
@@ -81,6 +85,10 @@ for robot = 1:nRobot
     end
         
     fprintf('\tErrore medio tag post ICP: \t\t%.3f \t\t %.3f \t\t %.3f \n', mean_rot1, mean_rot2, val)
+
+    fprintf('\tErrore medio tag post globalize: \t --- \t\t %.3f \t\t  --- \n', erroriMediTagGlobaliTot{2}(robot))
+
+    fprintf('\tErrore robot post globalize: \t\t --- \t\t %.3f \t\t  --- \n', erroriPosGlobaliTot{2}(robot))
     fprintf('\n')
 end
 

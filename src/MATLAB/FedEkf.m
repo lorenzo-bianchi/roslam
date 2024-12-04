@@ -226,7 +226,13 @@ classdef FedEkf < handle
             nTag = obj.data.nTag;
             change = false;
 
-            pruning_thr = min(5e-2, 0.00001 * obj.k);
+            if obj.id == 1 && obj.k == 720
+                a = 1;
+            end
+
+             pruning_thr = min(5e-2, 0.00001 * obj.k);
+
+            obj.save_history();
 
             if any(obj.startPruning == 0)
                 for indTag = 1:nTag
@@ -234,15 +240,63 @@ classdef FedEkf < handle
                         continue
                     end
 
-                    nPhi = obj.nPhiVett(indTag);
-                    nZeri = 0;
-                    for indPhi = 1:nPhi
-                        if obj.pesi(indTag, indPhi) < pruning_thr/nPhi
-                            nZeri = nZeri + 1;
+                    if 1
+                        n_steps = 10;
+    
+                        t = 1:obj.k+1;
+                        var_x = squeeze(obj.varsStoria(1, indTag, t))';
+                        var_y = squeeze(obj.varsStoria(2, indTag, t))';
+    
+                        sigma_x = sqrt(var_x); sigma_y = sqrt(var_y);
+                        grad_sigma_x = diff(sigma_x);
+                        grad_sigma_y = diff(sigma_y);
+                        
+                        cond = (grad_sigma_x == 0);
+                        grad_sigma_x(cond) = []; grad_sigma_y(cond) = [];
+                        if length(grad_sigma_x) < n_steps+1
+                            return
                         end
-                    end
-                    if nZeri >= obj.minZerosStartPruning
-                        obj.startPruning(indTag) = obj.k;
+                        grad_sigma_x = grad_sigma_x(end-n_steps+2:end);
+                        grad_sigma_y = grad_sigma_y(end-n_steps+2:end);
+    
+                        % Filtro FIR per grad_sigma_x e grad_sigma_y
+                        filtro_finestra = 6; % Lunghezza finestra del filtro
+                        kernel = ones(1, filtro_finestra) / filtro_finestra; % Kernel media mobile
+                        
+                        % Applicazione del filtro (manuale)
+                        grad_sigma_x_filtrato = zeros(size(grad_sigma_x));
+                        grad_sigma_y_filtrato = zeros(size(grad_sigma_y));
+                        
+                        for i = 1:length(grad_sigma_x)
+                            for j = 1:filtro_finestra
+                                if i - j + 1 > 0
+                                    grad_sigma_x_filtrato(i) = grad_sigma_x_filtrato(i) + kernel(j) * grad_sigma_x(i - j + 1);
+                                    grad_sigma_y_filtrato(i) = grad_sigma_y_filtrato(i) + kernel(j) * grad_sigma_y(i - j + 1);
+                                end
+                            end
+                        end
+    
+                        % Sostituisci grad_sigma_x e grad_sigma_y con i valori filtrati
+                        grad_sigma_x = grad_sigma_x_filtrato;
+                        grad_sigma_y = grad_sigma_y_filtrato;
+                        
+                        diff_thr = 0.0;
+                        decreasing = (grad_sigma_x < diff_thr) & (grad_sigma_y < diff_thr);
+    
+                        if all(decreasing)
+                            obj.startPruning(indTag) = obj.k;
+                        end
+                    else
+                        nPhi = obj.nPhiVett(indTag);
+                        nZeri = 0;
+                        for indPhi = 1:nPhi
+                            if obj.pesi(indTag, indPhi) < pruning_thr/nPhi
+                                nZeri = nZeri + 1;
+                            end
+                        end
+                        if nZeri >= obj.minZerosStartPruning
+                            obj.startPruning(indTag) = obj.k;
+                        end
                     end
                 end
             end
@@ -706,5 +760,93 @@ classdef FedEkf < handle
             obj.do_reset = 0;
         end
 
+        %
+        function structCondivisa = globalize(obj, all_measures)
+            nTag = obj.data.nTag;
+
+            thisRobotTags = [obj.xHatTagStoria(:, obj.k+1) obj.yHatTagStoria(:, obj.k+1)]';
+
+            posTagRobot = zeros(2, nTag, 0);
+
+            other_measures = struct('id', {}, 'tags', {}, 'vars', {});
+            for idx = 1:length(all_measures)
+                if obj.id == all_measures(idx).id
+                    continue
+                end
+                other_measures(end+1) = all_measures(idx);
+            end
+
+            N = length(other_measures);
+            if N < 2
+                return;
+            end
+
+            Ts = zeros(3, 3, N);
+            for idx = 1:N
+                otherRobotTags = other_measures(idx).tags;
+                [R, t, inliers] = ransacRototranslation(otherRobotTags', thisRobotTags', obj.data.numIterationsB, obj.data.distanceThresholdB, round(obj.data.percentMinInliersB * nTag));
+                if isempty(inliers)
+                    continue
+                end
+
+                T = [R, t; zeros(1, 2), 1];
+                Ts(:, :, idx) = T;
+
+                otherRobotTagsRot = T*[otherRobotTags; ones(1, nTag)];
+                posTagRobot(:, :, end+1) = otherRobotTagsRot(1:2, :);
+            end
+
+            point1_idx = 0;
+            point2_idx = 0;
+
+            use_max_distance = 1;
+            if use_max_distance
+                % Max distance
+                max_distance = 0;
+                
+                for i = 1:N
+                    for j = i+1:N
+                        dist = sqrt((posTagRobot(1, i) - posTagRobot(1, j))^2 + (posTagRobot(2, i) - posTagRobot(2, j))^2);
+                        if dist > max_distance
+                            max_distance = dist;
+                            point1_idx = i;
+                            point2_idx = j;
+                        end
+                    end
+                end
+            else
+                % Min sigma
+                sigma_pos = sqrt(var(posTagRobot, 0, 3));
+                sigma_pos_comb = sqrt(sigma_pos(1, :).^2 + sigma_pos(2, :).^2);
+                [~, point1_idx] = min(sigma_pos_comb);
+                sigma_combined_excluded = sigma_pos_comb;
+                sigma_combined_excluded(point1_idx) = Inf;
+                [~, point2_idx] = min(sigma_combined_excluded);
+            end
+
+            use_avg = 1;
+            if use_avg
+                mean_pos = mean(posTagRobot, 3);
+                point1 = mean_pos(:, point1_idx);
+                point2 = mean_pos(:, point2_idx);
+            else
+                point1 = thisRobotTags(:, point1_idx);
+                point2 = thisRobotTags(:, point2_idx);
+            end
+
+            t = point1;
+            s = (point2(2)-point1(2)) / norm(point2-point1);
+            c = (point2(1)-point1(1)) / norm(point2-point1);
+            T = [c -s t(1); s c t(2); 0 0 1]^-1;
+
+            global_tags = T * [thisRobotTags; ones(1, nTag)];
+            global_pos = T * [obj.xHatSLAM(1:2, obj.k+1); 1];
+            global_angle = obj.xHatSLAM(3, obj.k+1) + atan2(s, c);
+
+            structCondivisa = struct('ids', [point1_idx, point2_idx], ...
+                                     'use_avg', use_avg, ...
+                                     'pose', [global_pos(1:2); global_angle], ...
+                                     'tags', global_tags(1:2, :));
+        end
     end % methods
 end % class
