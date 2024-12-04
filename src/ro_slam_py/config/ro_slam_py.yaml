@@ -1,23 +1,26 @@
 /robot1/ro_slam_py:
   ros__parameters:
-    local_frame: robot1/base_footprint
-    odom_frame: robot1/odom
+    frame_local: robot1/base_footprint
+    frame_odom: robot1/odom
     robot_color: [1.0, 0.0, 0.0]
     show_tags_var: false
     uwb_id_order: ['']              #['44AE', '5723', '8192', '08B0']
     wheel_radius: 0.033
     wheels_separation: 0.16
 
-    use_pruning: true
-    min_step_start_pruning: 100
+    pruning:
+      enable: true
+      dim_deque: 10
+      min_step_to_start: 10
 
-    use_sharing: false
-    min_step_start_sharing: 400
-    actual_step_start_sharing: -1
+    sharing:
+      use_sharing: true
+      min_step_to_start: 400
 
-    use_reset: false
-    min_steps_reset: 10
-    min_tags_after_reset: 3
+    reset:
+      enable: true
+      min_steps: 10
+      min_tags_converged: 3
 
     n_tags: 10
     n_phi: 8
@@ -34,31 +37,80 @@
     kr: 0.0001
     kl: 0.0001
 
-/robot2/ro_slam_py:
-  ros__parameters:
-    local_frame: robot2/base_footprint
-    odom_frame: robot2/odom
-    robot_color: [1.0, 0.0, 0.0]
-    show_tags_var: false
-    uwb_id_order: ['44AE', '5723', '8192', '08B0']
-    wheel_radius: 0.033
-    wheels_separation: 0.16
+# /robot2/ro_slam_py:
+  # ros__parameters:
+  #   frame_local: robot2/base_footprint
+  #   frame_odom: robot2/odom
+  #   robot_color: [1.0, 0.0, 0.0]
+  #   show_tags_var: false
+  #   uwb_id_order: ['']              #['139C', '9128']
+  #   wheel_radius: 0.033
+  #   wheels_separation: 0.16
 
-    use_pruning: true
-    min_step_start_pruning: 70
-    use_sharing: true
-    min_step_start_sharing: 100
-    actual_step_start_sharing: -1
-    use_reset: true
+  #   pruning:
+  #     enable: true
+  #     dim_deque: 10
+  #     min_step_to_start: 10
 
-    n_tags: 4
-    n_phi: 8
-    sigma_range: 0.2
-    sigma_shared: 0.2
-    num_iterations: 100
-    distance_threshold: 0.1
-    percent_min_inliers: 0.7
-    kr: 0.0001
-    kl: 0.0001
-    min_steps_reset: 100
-    min_tags_after_reset: 3
+  #   sharing:
+  #     use_sharing: true
+  #     min_step_to_start: 400
+
+  #   reset:
+  #     enable: true
+  #     min_steps: 10
+  #     min_tags_converged: 3
+
+  #   n_tags: 10
+  #   n_phi: 8
+  #   sigma_range: 0.3
+  #   sigma_shared: 0.5
+  #   roma2D:
+  #     num_iterations_pre: 120
+  #     distance_threshold_pre: 0.2
+  #     percent_min_inliers_pre: 0.4
+  #     num_iterations_post: 120
+  #     distance_threshold_post: 0.1
+  #     percent_min_inliers_post: 0.6
+
+  #   kr: 0.0001
+  #   kl: 0.0001
+
+  # /robot3/ro_slam_py:
+  # ros__parameters:
+  #   frame_local: robot3/base_footprint
+  #   frame_odom: robot3/odom
+  #   robot_color: [1.0, 0.0, 0.0]
+  #   show_tags_var: false
+  #   uwb_id_order: ['']              #['4A21']
+  #   wheel_radius: 0.033
+  #   wheels_separation: 0.16
+
+  #   pruning:
+  #     enable: true
+  #     dim_deque: 10
+  #     min_step_to_start: 10
+
+  #   sharing:
+  #     use_sharing: true
+  #     min_step_to_start: 400
+
+  #   reset:
+  #     enable: true
+  #     min_steps: 10
+  #     min_tags_converged: 3
+
+  #   n_tags: 10
+  #   n_phi: 8
+  #   sigma_range: 0.3
+  #   sigma_shared: 0.5
+  #   roma2D:
+  #     num_iterations_pre: 120
+  #     distance_threshold_pre: 0.2
+  #     percent_min_inliers_pre: 0.4
+  #     num_iterations_post: 120
+  #     distance_threshold_post: 0.1
+  #     percent_min_inliers_post: 0.6
+
+  #   kr: 0.0001
+  #   kl: 0.0001

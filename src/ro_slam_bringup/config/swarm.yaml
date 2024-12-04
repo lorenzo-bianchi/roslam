@@ -1,7 +1,7 @@
 /robot1/ro_slam_py:
   ros__parameters:
-    local_frame: robot1/base_footprint
-    odom_frame: robot1/odom
+    frame_local: robot1/base_footprint
+    frame_odom: robot1/odom
     robot_color: [1.0, 0.0, 0.0]
     show_tags_var: false
     wheel_radius: 0.033
@@ -9,8 +9,8 @@
 
 /robot2/ro_slam_py:
   ros__parameters:
-    local_frame: robot2/base_footprint
-    odom_frame: robot2/odom
+    frame_local: robot2/base_footprint
+    frame_odom: robot2/odom
     robot_color: [0.0, 1.0, 0.0]
     show_tags_var: false
     wheel_radius: 0.033
@@ -18,8 +18,8 @@
 
 /robot3/ro_slam_py:
   ros__parameters:
-    local_frame: robot3/base_footprint
-    odom_frame: robot3/odom
+    frame_local: robot3/base_footprint
+    frame_odom: robot3/odom
     robot_color: [0.0, 0.0, 1.0]
     show_tags_var: false
     wheel_radius: 0.033
@@ -27,8 +27,8 @@
 
 /robot4/ro_slam_py:
   ros__parameters:
-    local_frame: robot4/base_footprint
-    odom_frame: robot4/odom
+    frame_local: robot4/base_footprint
+    frame_odom: robot4/odom
     robot_color: [1.0, 1.0, 0.0]
     show_tags_var: false
     wheel_radius: 0.033
@@ -36,8 +36,8 @@
 
 /robot5/ro_slam_py:
   ros__parameters:
-    local_frame: robot5/base_footprint
-    odom_frame: robot5/odom
+    frame_local: robot5/base_footprint
+    frame_odom: robot5/odom
     robot_color: [1.0, 0.0, 1.0]
     show_tags_var: false
     wheel_radius: 0.033
@@ -45,8 +45,8 @@
 
 /robot6/ro_slam_py:
   ros__parameters:
-    local_frame: robot6/base_footprint
-    odom_frame: robot6/odom
+    frame_local: robot6/base_footprint
+    frame_odom: robot6/odom
     robot_color: [0.0, 1.0, 1.0]
     show_tags_var: false
     wheel_radius: 0.033

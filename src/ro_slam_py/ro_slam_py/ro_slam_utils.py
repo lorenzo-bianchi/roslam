@@ -14,8 +14,8 @@ def broadcast_pose(self):
     transform = TransformStamped()
 
     transform.header.stamp = self.get_clock().now().to_msg()
-    transform.header.frame_id = self.odom_frame
-    transform.child_frame_id = self.local_frame
+    transform.header.frame_id = self.frame_odom
+    transform.child_frame_id = self.frame_local
 
     transform.transform.translation.x = float(pose[0])
     transform.transform.translation.y = float(pose[1])
@@ -33,7 +33,7 @@ def publish_tags(self):
     marker_array_tags = MarkerArray()
     for i, tag in enumerate(self.tags_poses):
         marker_tag = Marker()
-        marker_tag.header.frame_id = self.odom_frame
+        marker_tag.header.frame_id = self.frame_odom
         marker_tag.header.stamp = self.get_clock().now().to_msg()
         marker_tag.ns = 'tag'
         marker_tag.id = i

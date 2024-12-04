@@ -49,6 +49,7 @@ class ROSlamNode(Node):
 
         self.robot_id = int(re.findall(r"\d+$", self.get_namespace())[0])
         self.t_resets = []
+        self.actual_step_start_sharing = -1
 
         self.data = FedEkfData()
         self.data.n_tags = self.n_tags
@@ -66,8 +67,11 @@ class ROSlamNode(Node):
         self.data.wheels_separation = self.wheels_separation
         self.data.kr = self.kr
         self.data.kl = self.kl
-        self.data.min_steps_reset = self.min_steps_reset
-        self.data.min_tags_after_reset = self.min_tags_after_reset
+        self.data.reset_min_steps = self.reset_min_steps
+        self.data.reset_min_tags_converged = self.reset_min_tags_converged
+        self.data.dim_deque = self.pruning_dim_deque
+        self.data.pruning_min_step_to_start = self.pruning_min_step_to_start
+        self.data.sharing_min_step_to_start = self.sharing_min_step_to_start
 
         if self.uwb_id_order[0] != '':
             self.uwb_idx = {uwb_id: idx for idx, uwb_id in enumerate(self.uwb_id_order)}
