@@ -41,7 +41,7 @@ class UWBDriver(Node):
         # Initialize parameters
         self.declare_parameter('id', 0)
         self.declare_parameter('port', '/dev/ttyACM0')
-        self.declare_parameters('print_tty', False)
+        self.declare_parameter('print_tty', False)
         self.declare_parameter('publish_rviz', False)
 
         self.id = int(self.get_parameter('id').value)
