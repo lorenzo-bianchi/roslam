@@ -2,4 +2,5 @@
   ros__parameters:
     id: 0
     port: /dev/uwb-R1-M1-T1
+    print_tty: true
     publish_rviz: false

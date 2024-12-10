@@ -41,14 +41,17 @@ class UWBDriver(Node):
         # Initialize parameters
         self.declare_parameter('id', 0)
         self.declare_parameter('port', '/dev/ttyACM0')
+        self.declare_parameters('print_tty', False)
         self.declare_parameter('publish_rviz', False)
 
         self.id = int(self.get_parameter('id').value)
         self.dwm_port = self.get_parameter('port').value
+        self.print_tty = self.get_parameter('print_tty').value
         self.publish_rviz = self.get_parameter('publish_rviz').value
 
         self.get_logger().info(f'id: {self.id}')
         self.get_logger().info(f'port: {self.dwm_port}')
+        self.get_logger().info(f'print_tty: {self.print_tty}')
         self.get_logger().info(f'publish_rviz: {self.publish_rviz}')
 
         # Serial port settings
@@ -102,7 +105,8 @@ class UWBDriver(Node):
                 splits = serial_read_line.split(',')
                 if splits[0] == '':
                     continue
-                print(splits)
+                if self.print_tty:
+                    print(splits)
 
                 n_anchors = int(splits[1])
                 msg_array.anchor_num = n_anchors
