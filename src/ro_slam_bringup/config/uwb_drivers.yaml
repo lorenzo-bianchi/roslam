@@ -1,0 +1,38 @@
+/robot1/M1/uwb_driver:
+  ros__parameters:
+    id: 1
+    port: /dev/uwb-R1-M1-T1
+    print_tty: false
+    publish_rviz: false
+
+/robot1/M2/uwb_driver:
+  ros__parameters:
+    id: 1
+    port: /dev/uwb-R1-M2-T1
+    print_tty: false
+    publish_rviz: false
+
+
+
+/robot2/M1/uwb_driver:
+  ros__parameters:
+    id: 2
+    port: /dev/uwb-R2-M1-T2
+    print_tty: false
+    publish_rviz: false
+
+/robot2/M3/uwb_driver:
+  ros__parameters:
+    id: 2
+    port: /dev/uwb-R2-M3-T2
+    print_tty: false
+    publish_rviz: false
+
+
+
+/robot3/M1/uwb_driver:
+  ros__parameters:
+    id: 3
+    port: /dev/uwb-R3-M1-T3
+    print_tty: false
+    publish_rviz: false
