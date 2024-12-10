@@ -16,7 +16,7 @@ def generate_launch_description():
         emulate_tty=True,
         output='both',
         log_cmd=True,
-        remappings=[('/uwb', '/uwb_uwb')],
+        remappings=[('/uwb', '/robot0/uwb_tag')],
     )
 
     ld.add_action(node)

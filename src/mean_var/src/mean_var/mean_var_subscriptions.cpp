@@ -36,6 +36,13 @@ namespace MeanVar
  */
 void MeanVarNode::uwb_clbk(const UwbArray::ConstSharedPtr msg)
 {
+  if (first_msg)
+  {
+    first_msg = false;
+    start = rclcpp::Clock().now();
+    return;
+  }
+
   Eigen::ArrayXd imu_measures(6);
 
   float dist = msg->uwbs[0].dist;
@@ -46,8 +53,13 @@ void MeanVarNode::uwb_clbk(const UwbArray::ConstSharedPtr msg)
   float delta2 = dist - mean;
   M2 += delta * delta2;
   var = M2 / N;
+  hz = static_cast<float>(N) / (rclcpp::Clock().now() - start).seconds();
 
-  std::cout << "N = " << N << "\tmean = " << mean << "\tvar = " << var << std::endl;
+  std::cout << "N = " << N << "\thz = " << hz << "\tmean = " << mean << "\tvar = " << var << std::endl;
+  std::cout << "N = " << N <<
+               "\thz = " << std::fixed << std::setprecision(2) << hz <<
+               "\tmean = " << mean <<
+               "\tvar = " << var << std::endl;
 }
 
 } // namespace MeanVar

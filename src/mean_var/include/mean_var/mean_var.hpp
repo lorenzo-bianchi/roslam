@@ -29,6 +29,7 @@
 
 #include <cstdio>
 #include <cfloat>
+#include <chrono>
 #include <vector>
 
 #include <eigen3/Eigen/Geometry>
@@ -71,6 +72,9 @@ private:
   float M2 = 0.0f;
   float mean = 0.0f;
   float var = 0.0f;
+  float hz = 0.0f;
+  bool first_msg = true;
+  rclcpp::Time start;
 };
 
 } // namespace MeanVar
