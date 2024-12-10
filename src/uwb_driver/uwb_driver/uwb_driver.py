@@ -41,17 +41,20 @@ class UWBDriver(Node):
         # Initialize parameters
         self.declare_parameter('id', 0)
         self.declare_parameter('port', '/dev/ttyACM0')
+        self.declare_parameter('publish_rviz', False)
 
         self.id = int(self.get_parameter('id').value)
         self.dwm_port = self.get_parameter('port').value
+        self.publish_rviz = self.get_parameter('publish_rviz').value
 
         self.get_logger().info(f'id: {self.id}')
         self.get_logger().info(f'port: {self.dwm_port}')
-
+        self.get_logger().info(f'publish_rviz: {self.publish_rviz}')
 
         # Serial port settings
         self.uwb_pub = self.create_publisher(UwbArray, f'/robot{self.id}/uwb_tag', 0)
-        self.uwb_pub_rviz = self.create_publisher(PoseStamped, f'/robot{self.id}/rviz/uwb_pose', 0)
+        if self.publish_rviz:
+            self.uwb_pub_rviz = self.create_publisher(PoseStamped, f'/robot{self.id}/rviz/uwb_pose', 0)
 
         try:
             self.serial_port_DWM1001 = serial.Serial(
@@ -97,6 +100,8 @@ class UWBDriver(Node):
                 serial_read_line_enc = self.serial_port_DWM1001.read_until(expected=b'\r\n')
                 serial_read_line = serial_read_line_enc.decode()[:-2]
                 splits = serial_read_line.split(',')
+                if splits[0] == '':
+                    continue
                 print(splits)
 
                 n_anchors = int(splits[1])
@@ -118,7 +123,7 @@ class UWBDriver(Node):
 
                     msg_array.uwbs.append(msg)
 
-                if len(splits) > 2+n_anchors*6:
+                if self.publish_rviz and len(splits) > 2+n_anchors*6:
                     i = n_anchors*6+1
                     msg_array.x_est = float(splits[i])
                     msg_array.y_est = float(splits[i+1])
@@ -157,7 +162,7 @@ def main(args=None):
             time.sleep(2)
             uwb_driver.destroy_node()
 
-            rclpy.shutdown()
+            # rclpy.shutdown()
 
 
 if __name__ == '__main__':
