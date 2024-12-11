@@ -24,7 +24,7 @@ def generate_launch_description():
     launch_turtlebot = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('turtlebot3_bringup'), 'launch', 'roslam_robot.launch')
+                get_package_share_directory('turtlebot3_bringup'), 'launch', 'roslam_robot.launch.py')
         )
     )
     ld.add_action(launch_turtlebot)
