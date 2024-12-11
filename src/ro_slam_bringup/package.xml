@@ -12,6 +12,7 @@
   <depend>joy2cmdvel</depend>
   <depend>joystick</depend>
   <depend>ro_slam_py</depend>
+  <depend>ro_slam_descriptions</depend>
   <depend>ro_slam_interfaces</depend>
   <depend>robot_state_publisher</depend>
   <depend>tf2_ros</depend>
