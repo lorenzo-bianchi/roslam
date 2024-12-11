@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(robot_sim)
+project(ro_slam_descriptions)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-install(DIRECTORY launch
+install(DIRECTORY models urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -40,7 +40,7 @@ def generate_launch_description():
     name='IGN_GAZEBO_RESOURCE_PATH',value=[
       os.path.join('/opt/ros/humble', 'share'),
       ':' +
-      os.path.join(get_package_share_directory('robot_sim'), 'models')])
+      os.path.join(get_package_share_directory('ro_slam_descriptions'), 'models')])
   ld.add_action(gz_resource_path)
 
   # Set launch arguments
@@ -77,7 +77,7 @@ def generate_launch_description():
       name='static_transform_publisher',
       output='log',
       parameters=[params],
-      arguments=[str(pos[0]), str(pos[1]), str(pos[2]), '0.0', '0.0', str(pos[3]), 'map', f'{robot_name}/odom'])
+      arguments=[str(pos[0]), str(pos[1]), str(pos[2]), str(pos[3]), '0.0', '0.0', 'map', f'{robot_name}/odom'])
     ld.add_action(tf_map_robot)
 
     data = {}
@@ -87,7 +87,7 @@ def generate_launch_description():
     data['prob_loss_measurement'] = '0.05'
     data['mean'] = '0.0'
     data['sigma'] = '0.01'
-    sdf_file = os.path.join(get_package_share_directory('robot_sim'), 'models', 'robot', 'model.sdf')
+    sdf_file = os.path.join(get_package_share_directory('ro_slam_descriptions'), 'models', 'robot', 'model.sdf')
     modified_sdf_file = modify_sdf_namespace(sdf_file, data)
 
     create_robot = Node(
@@ -107,7 +107,7 @@ def generate_launch_description():
       )
     ld.add_action(create_robot)
 
-    urdf = os.path.join(get_package_share_directory('robot_sim'), 'urdf', 'robot.urdf')
+    urdf = os.path.join(get_package_share_directory('ro_slam_descriptions'), 'urdf', 'robot.urdf')
     doc = xacro.parse(open(urdf))
     xacro.process_doc(doc)
     robot_state_publisher = Node(
@@ -157,7 +157,7 @@ def generate_launch_description():
   ld.add_action(bridge)
 
   ### Gazebo ###
-  world_only = os.path.join(get_package_share_directory('robot_sim'), 'models', 'worlds', 'world_only_ign.sdf')
+  world_only = os.path.join(get_package_share_directory('ro_slam_descriptions'), 'models', 'worlds', 'world_only_ign.sdf')
   gazebo_launch = IncludeLaunchDescription(
     PythonLaunchDescriptionSource(
       [os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')]),
@@ -170,7 +170,7 @@ def generate_launch_description():
     output='screen',
     parameters=[params],
     arguments=['-file', PathJoinSubstitution([
-                  get_package_share_directory('robot_sim'),
+                  get_package_share_directory('ro_slam_descriptions'),
                   'models',
                   'wall',
                   'model.sdf']),
@@ -190,7 +190,7 @@ def generate_launch_description():
       parameters=[params],
       arguments=['-name', f'anchor_{i}',
                  '-file', PathJoinSubstitution([
-                    get_package_share_directory('robot_sim'),
+                    get_package_share_directory('ro_slam_descriptions'),
                     'models',
                     'uwb_anchor',
                     'model.sdf']),
