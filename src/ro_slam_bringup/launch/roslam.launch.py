@@ -17,7 +17,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     launch_uwb = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([ThisLaunchFileDir(), 'uwb_drivers.launch.py'])
+        PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/uwb_drivers.launch.py'])
     )
     ld.add_action(launch_uwb)
 
