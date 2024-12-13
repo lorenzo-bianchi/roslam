@@ -14,7 +14,7 @@ def generate_launch_description():
   ld = LaunchDescription()
 
   container = ComposableNodeContainer(
-    name='joy_container',
+    name='joy_container_robot1',
     namespace='',
     package='rclcpp_components',
     executable='component_container',
@@ -31,7 +31,7 @@ def generate_launch_description():
           'axis_deadzone_val': 300,
           'axis_max_val': 32767.0,
           'invert_y': True,
-          'joy_topic_name': '~/cmd_joystick',
+          'joy_topic_name': '/robot1/cmd_joystick',
           'joy_path' : '/dev/input/js0'
           }],
         remappings=[]),
@@ -42,7 +42,7 @@ def generate_launch_description():
         namespace='',
         parameters=[{
           'cmd_vel_topic_name': '/robot1/cmd_vel',
-          'joy_topic_name': '/joystick/cmd_joystick',
+          'joy_topic_name': '/robot1/cmd_joystick',
           'max_ang_vel': 2.0,
           'max_lin_vel': 0.22}],
         remappings=[])])
