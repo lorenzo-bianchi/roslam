@@ -59,13 +59,13 @@ void JoystickNode::joy_routine()
       switch (event_.type)
       {
         case JS_EVENT_INIT + 1:
-          *buttons[event_.number] = (uint8_t) event_.value;
+          // *buttons[event_.number] = (uint8_t) event_.value;
           break;
         case JS_EVENT_INIT + 2:
           *axes[event_.number] = event_.value / axis_max_val_;
           break;
         case JS_EVENT_BUTTON:
-          *buttons[event_.number] = (uint8_t) event_.value;
+          // *buttons[event_.number] = (uint8_t) event_.value;
           break;
         case JS_EVENT_AXIS:
           switch (event_.number)
