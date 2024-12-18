@@ -32,7 +32,7 @@ def generate_launch_description():
           'axis_max_val': 32767.0,
           'invert_y': True,
           'joy_topic_name': '/robot2/cmd_joystick',
-          'joy_path' : '/dev/input/js1'
+          'joy_path' : '/dev/input/js0'
           }],
         remappings=[]),
       ComposableNode(
@@ -43,8 +43,8 @@ def generate_launch_description():
         parameters=[{
           'cmd_vel_topic_name': '/robot2/cmd_vel',
           'joy_topic_name': '/robot2/cmd_joystick',
-          'max_ang_vel': 2.0,
-          'max_lin_vel': 0.22}],
+          'max_ang_vel': 1.8,
+          'max_lin_vel': 0.15}],
         remappings=[])])
   ld.add_action(container)
 
