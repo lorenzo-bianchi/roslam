@@ -15,6 +15,11 @@ values = ["A1", "A2", "A3", "A4", ...
 uwb_fixed_names = dictionary(keys(1:4), values(1:4));
 uwb_moving_names = dictionary(keys(5:end), values(5:end));
 
+pos_anchors = [    0.0    0.0;
+                1.7903    0.0;
+                1.7241 3.6934;
+               -0.1471 3.7211];
+
 %% Read bag and topics names
 bag_name = '20241218_test1';
 path_prefix = '/home/lorenzo/Github/University/turtlebot3-utv-fork/logs/';
@@ -55,20 +60,9 @@ for i = 1:length(all_topics)
         n_anchors_tot = -1;
         inter_robots_distances = false;
         for k = 1:length(uwb_msgs)
-            num = uwb_msgs{k}.anchor_num;
-            if num > n_anchors_tot
-                id_strs = string({uwb_msgs{k}.uwbs.id_str});
-                n_anchors_tot = uwb_msgs{k}.anchor_num;
-
-                ids_real_anchors = ids < 100;
-                n_anchors = sum(ids_real_anchors);
-                gt_pos_x = [uwb_msgs{k}.uwbs.x]';
-                gt_pos_y = [uwb_msgs{k}.uwbs.y]';
-                pos_anchors = [gt_pos_x(ids_real_anchors) gt_pos_y(ids_real_anchors)];
-
-                if n_anchors < n_anchors_tot
-                    inter_robots_distances = true;
-                end
+            id_strs = string({uwb_msgs{k}.uwbs.id_str});
+            if isKey(uwb_moving_names, id_strs(1))
+                inter_robots_distances = true;
             end
         end
         break
