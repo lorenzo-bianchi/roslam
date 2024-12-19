@@ -6,11 +6,9 @@ wheel_radius = 0.033;
 wheels_separation = 0.16;
 
 keys = ["44AE", "5723", "8192", "08B0", ...
-        "4A21", "860B", "52B0", "5107", ...
-        "139C", "54B3", "9128", "4A21"];
+        "139C", "9128", "4A21"];
 values = ["A1", "A2", "A3", "A4", ...
-          "M1-T1", "M2-T1", "M1-T2", "M3-T2", ...
-          "M2-A2", "M1-T3", "M2-A3", "M3-A3"];
+          "R2-M2-A2", "R3-M2-A3", "R3-M3-A3"];
 
 uwb_fixed_names = dictionary(keys(1:4), values(1:4));
 uwb_moving_names = dictionary(keys(5:end), values(5:end));
@@ -93,31 +91,31 @@ end
 
 %% Topics analysis
 % Ground truth 
-if any(contains(topics_names, 'ground_truth'))
-    gt_topics_names = all_topics(contains(all_topics, 'ground_truth'));
-    gt_data = struct('times', [], 'x', [], 'y', [], 'theta', [], 'v_lin', [], 'v_ang', []);
-    for i = 1:length(gt_topics_names)
-        gt_topic = select(bag, 'Topic', gt_topics_names(i));
-        gt_msg = readMessages(gt_topic);
-        gt_times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, gt_msg);
-        gt_times = gt_times - gt_times(1);
-        gt_pos_x = cellfun(@(m) double(m.pose.pose.position.x), gt_msg);
-        gt_pos_y = cellfun(@(m) double(m.pose.pose.position.y), gt_msg);
-
-        quat_w = cellfun(@(m) m.pose.pose.orientation.w, gt_msg);
-        quat_x = cellfun(@(m) m.pose.pose.orientation.x, gt_msg);
-        quat_y = cellfun(@(m) m.pose.pose.orientation.y, gt_msg);
-        quat_z = cellfun(@(m) m.pose.pose.orientation.z, gt_msg);
-        rpy = quat2eul([quat_w, quat_x, quat_y, quat_z], 'ZYX');
-        gt_data(i).theta = rpy(:, 1);
-
-        gt_data(i).times = gt_times;
-        gt_data(i).x = gt_pos_x;
-        gt_data(i).y = gt_pos_y;
-        gt_data(i).v_lin = cellfun(@(m) m.twist.twist.linear.x, gt_msg);
-        gt_data(i).v_ang = cellfun(@(m) m.twist.twist.angular.z, gt_msg);
-    end
-end
+% if any(contains(topics_names, 'ground_truth'))
+%     gt_topics_names = all_topics(contains(all_topics, 'ground_truth'));
+%     gt_data = struct('times', [], 'x', [], 'y', [], 'theta', [], 'v_lin', [], 'v_ang', []);
+%     for i = 1:length(gt_topics_names)
+%         gt_topic = select(bag, 'Topic', gt_topics_names(i));
+%         gt_msg = readMessages(gt_topic);
+%         gt_times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, gt_msg);
+%         gt_times = gt_times - gt_times(1);
+%         gt_pos_x = cellfun(@(m) double(m.pose.pose.position.x), gt_msg);
+%         gt_pos_y = cellfun(@(m) double(m.pose.pose.position.y), gt_msg);
+% 
+%         quat_w = cellfun(@(m) m.pose.pose.orientation.w, gt_msg);
+%         quat_x = cellfun(@(m) m.pose.pose.orientation.x, gt_msg);
+%         quat_y = cellfun(@(m) m.pose.pose.orientation.y, gt_msg);
+%         quat_z = cellfun(@(m) m.pose.pose.orientation.z, gt_msg);
+%         rpy = quat2eul([quat_w, quat_x, quat_y, quat_z], 'ZYX');
+%         gt_data(i).theta = rpy(:, 1);
+% 
+%         gt_data(i).times = gt_times;
+%         gt_data(i).x = gt_pos_x;
+%         gt_data(i).y = gt_pos_y;
+%         gt_data(i).v_lin = cellfun(@(m) m.twist.twist.linear.x, gt_msg);
+%         gt_data(i).v_ang = cellfun(@(m) m.twist.twist.angular.z, gt_msg);
+%     end
+% end
 
 %% UWB
 if any(contains(topics_names, 'uwb_tag'))
@@ -125,26 +123,34 @@ if any(contains(topics_names, 'uwb_tag'))
     uwb_anchors_data = cell(length(uwb_topics_names), 1);
     uwb_robots_data = cell(length(uwb_topics_names), 1);
     for i = 1:length(uwb_topics_names)
+        % robot i
         uwb_topic = select(bag, 'Topic', uwb_topics_names(i));
         num_msgs = uwb_topic.NumMessages;
         uwb_msg = readMessages(uwb_topic);
         times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, uwb_msg);
-        times = times - times(1);
-        uwb_dist = nan*ones(num_msgs, n_anchors);
-        uwb_dist_inter = nan*ones(num_msgs, n_anchors_tot-n_anchors+1);
+        times = times - min(times);
+
         for j = 1:num_msgs
-            uwb_dist_inter(j, i) = 0.0;
-            for k = 1:size(uwb_msg{j}.uwbs, 1)
-                id = uwb_msg{j}.uwbs(k).id;
-                if id > 100
-                    uwb_dist_inter(j, id-100) = uwb_msg{j}.uwbs(k).dist;
-                    continue
+            % message at time j
+            if isKey(uwb_fixed_names, uwb_msg{j}.uwbs(1).id_str)
+                uwb_dist = nan*ones(1, n_anchors);
+                for k = 1:size(uwb_msg{j}.uwbs, 1)
+                    id_str = uwb_msg{j}.uwbs(k).id_str;
+                    anchor_num = str2double(extractBetween(uwb_fixed_names(id_str), 2, 2));
+                    uwb_dist(anchor_num) = uwb_msg{j}.uwbs(k).dist;
                 end
-                uwb_dist(j, id+1) = uwb_msg{j}.uwbs(k).dist;
+                uwb_anchors_data{i}(end+1, :) = [times(j), uwb_dist];
+            else
+                uwb_dist_inter = nan*ones(1, n_robots);
+                uwb_dist_inter(i) = 0.0;
+                for k = 1:size(uwb_msg{j}.uwbs, 1)
+                    id_str = uwb_msg{j}.uwbs(k).id_str;
+                    other_robot_num = str2double(extractBetween(uwb_moving_names(id_str), 2, 2));
+                    uwb_dist_inter(other_robot_num) = uwb_msg{j}.uwbs(k).dist;
+                end
+                uwb_robots_data{i}(end+1, :) = [times(j), uwb_dist_inter];
             end
         end
-        uwb_anchors_data{i} = [times, uwb_dist];
-        uwb_robots_data{i} = [times, uwb_dist_inter];
     end
 end
 
@@ -165,7 +171,7 @@ if any(contains(topics_names, 'joint_states'))
         end
 
         times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, js_msg);
-        times = times - times(1);
+        times = times - times(1); %%%%%%%%%%%%%%%%%%%%%%%%%%
 
         pos_left = cellfun(@(m) m.position(idx_left), js_msg);
         pos_left = [0; diff(pos_left) * wheel_radius];
@@ -186,7 +192,7 @@ if any(contains(topics_names, 'odom'))
         odom_msg = readMessages(odom_topic);
         
         odom_data(i).times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, odom_msg);
-        odom_data(i).times = odom_data(i).times - odom_data(i).times(1);
+        odom_data(i).times = odom_data(i).times - odom_data(i).times(1);    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         odom_data(i).x = cellfun(@(m) m.pose.pose.position.x, odom_msg);
         odom_data(i).y = cellfun(@(m) m.pose.pose.position.y, odom_msg);
         odom_data(i).v_lin = cellfun(@(m) m.twist.twist.linear.x, odom_msg);
