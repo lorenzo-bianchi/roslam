@@ -57,8 +57,9 @@ for i = 1:length(all_topics)
         for k = 1:length(uwb_msgs)
             num = uwb_msgs{k}.anchor_num;
             if num > n_anchors_tot
-                ids = [uwb_msgs{k}.uwbs.id];
+                id_strs = string({uwb_msgs{k}.uwbs.id_str});
                 n_anchors_tot = uwb_msgs{k}.anchor_num;
+
                 ids_real_anchors = ids < 100;
                 n_anchors = sum(ids_real_anchors);
                 gt_pos_x = [uwb_msgs{k}.uwbs.x]';
