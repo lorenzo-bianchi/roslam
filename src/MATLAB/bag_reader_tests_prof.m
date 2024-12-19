@@ -15,7 +15,7 @@ values = ["A1", "A2", "A3", "A4", ...
 uwb_fixed_names = dictionary(keys(1:4), values(1:4));
 uwb_moving_names = dictionary(keys(5:end), values(5:end));
 
-pos_anchors = [    0.0    0.0;
+anchors_pos = [    0.0    0.0;
                 1.7903    0.0;
                 1.7241 3.6934;
                -0.1471 3.7211];
@@ -52,17 +52,22 @@ for i = 1:length(all_topics)
 end
 
 %% Get number of tags and positions
+inter_robots_distances = false;
+n_anchors = -1;
 for i = 1:length(all_topics)
     topic = all_topics(i);
     if contains(topic, 'uwb')
         uwb_topic = select(bag, 'Topic', topic);
         uwb_msgs = readMessages(uwb_topic);
-        n_anchors_tot = -1;
-        inter_robots_distances = false;
         for k = 1:length(uwb_msgs)
-            id_strs = string({uwb_msgs{k}.uwbs.id_str});
-            if isKey(uwb_moving_names, id_strs(1))
+            % id_strs = string({uwb_msgs{k}.uwbs.id_str});
+            if isKey(uwb_moving_names, uwb_msgs{k}.uwbs(1).id_str)
                 inter_robots_distances = true;
+            else
+                num = uwb_msgs{k}.anchor_num;
+                if num > n_anchors
+                    n_anchors = num;
+                end
             end
         end
         break
@@ -77,13 +82,13 @@ if inter_robots_distances
 else
     fprintf('Inter-robots distances NOT AVAILABLE\n');
 end
-fprintf('Available topicjs_msg = readMessages(js_topic)s:\n');
-for name = topics_names
-    fprintf('\t- %s\n', name);
-end
 fprintf('Anchors in positions:\n');
 for i = 1:length(pos_anchors)
-    fprintf('\t- (%d, %d)\n', pos_anchors(i,1), pos_anchors(i,2));
+    fprintf('\t- (%.2f, %.2f)\n', pos_anchors(i,1), pos_anchors(i,2));
+end
+fprintf('Available topics:\n');
+for name = topics_names
+    fprintf('\t- %s\n', name);
 end
 
 %% Topics analysis
