@@ -1,5 +1,5 @@
 %% Cleanup
-clc; clear; close all
+clc; close all
 
 %% Params
 wheel_radius = 0.033;
@@ -13,13 +13,11 @@ values = ["A1", "A2", "A3", "A4", ...
 uwb_fixed_names = dictionary(keys(1:4), values(1:4));
 uwb_moving_names = dictionary(keys(5:end), values(5:end));
 
-pos_anchors = [    0.0    0.0;
-                1.7903    0.0;
-                1.7241 3.6934;
-               -0.1471 3.7211];
+pos_anchors = z_opt(1:4, :);
 
 %% Read bag and topics names
-bag_name = '20241218_test7';
+test = 7;
+bag_name = ['20241218_test', num2str(test)];
 path_prefix = '/home/lorenzo/Github/turtlebot3-utv-fork/logs/';
 full_path = strcat(path_prefix, bag_name, '/', bag_name, '_0.db3');
 bag = ros2bagreader(full_path);
@@ -90,32 +88,22 @@ for name = topics_names
 end
 
 %% Topics analysis
-% Ground truth 
-% if any(contains(topics_names, 'ground_truth'))
-%     gt_topics_names = all_topics(contains(all_topics, 'ground_truth'));
-%     gt_data = struct('times', [], 'x', [], 'y', [], 'theta', [], 'v_lin', [], 'v_ang', []);
-%     for i = 1:length(gt_topics_names)
-%         gt_topic = select(bag, 'Topic', gt_topics_names(i));
-%         gt_msg = readMessages(gt_topic);
-%         gt_times = cellfun(@(m) double(m.header.stamp.sec) + double(m.header.stamp.nanosec)/1e9, gt_msg);
-%         gt_times = gt_times - gt_times(1);
-%         gt_pos_x = cellfun(@(m) double(m.pose.pose.position.x), gt_msg);
-%         gt_pos_y = cellfun(@(m) double(m.pose.pose.position.y), gt_msg);
-% 
-%         quat_w = cellfun(@(m) m.pose.pose.orientation.w, gt_msg);
-%         quat_x = cellfun(@(m) m.pose.pose.orientation.x, gt_msg);
-%         quat_y = cellfun(@(m) m.pose.pose.orientation.y, gt_msg);
-%         quat_z = cellfun(@(m) m.pose.pose.orientation.z, gt_msg);
-%         rpy = quat2eul([quat_w, quat_x, quat_y, quat_z], 'ZYX');
-%         gt_data(i).theta = rpy(:, 1);
-% 
-%         gt_data(i).times = gt_times;
-%         gt_data(i).x = gt_pos_x;
-%         gt_data(i).y = gt_pos_y;
-%         gt_data(i).v_lin = cellfun(@(m) m.twist.twist.linear.x, gt_msg);
-%         gt_data(i).v_ang = cellfun(@(m) m.twist.twist.angular.z, gt_msg);
-%     end
-% end
+% Ground truth
+gt_data = struct('initial_pose', [], 'final_distances_anchors', [], 'final_distances_robots', []);
+dist_robots = final_distances_robots(test, :);
+dist_matrix = [             0, dist_robots(1), dist_robots(2);
+               dist_robots(1),              0, dist_robots(3);
+               dist_robots(2), dist_robots(3),             0];
+for robot = 1:n_robots
+    starting_pose = char(starting_poses(test, robot));
+    pnt0_char = starting_pose(1);
+    angle0_char = starting_pose(3:end);
+    pnt0 = pts(pnt0_char);
+    angle0 = angles(angle0_char);
+    gt_data(robot).initial_pose = [pnt0(1), pnt0(2), angle0];
+    gt_data(robot).final_distances_anchors = squeeze(final_distances_anchors(test, robot, :))';
+    gt_data(robot).final_distances_robots = dist_matrix(robot, :);
+end
 
 %% UWB
 if any(contains(topics_names, 'uwb_tag'))
@@ -371,7 +359,7 @@ roslam_data.num_anchors_fixed = n_anchors;
 roslam_data.inter_robots_distances = inter_robots_distances;
 roslam_data.anchors_positions = pos_anchors;
 
-% roslam_data.ground_truth = gt_data;
+roslam_data.ground_truth = gt_data;
 roslam_data.robot_odometry = odom_data;
 roslam_data.wheels_odometry = js_data;
 roslam_data.uwb_anchors_distances = uwb_anchors_data;
