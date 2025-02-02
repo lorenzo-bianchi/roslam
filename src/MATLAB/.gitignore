@@ -3,4 +3,5 @@
 *.fig
 *.mat
 *.eps
+videos/*
 matlab_msg_gen/*
