@@ -4,6 +4,7 @@ clc; close all; clear
 num_anchors = 4;
 num_points = 11;
 num_robots = 3;
+num_tests = 8;
 
 %%
 d12 = 1.80;
@@ -175,7 +176,7 @@ set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 %%
 anchors = z_opt(1:num_anchors, :);
 pts = containers.Map(names, num2cell(z_opt, 2));
-angles = containers.Map(["right", "up", "left", "down"], [0.0, pi/2, pi, -pi]);
+angles = containers.Map(["right", "up", "left", "down"], [0.0, pi/2, pi, -pi/2]);
 
 %% GT
 starting_poses = [
@@ -245,7 +246,7 @@ function f = nested_cost_fun2(z, num_robots, num_anchors, anchors, dist_robot_ro
     end
 end
 
-final_positions_robots = zeros(test, 2*num_robots);
+final_positions_robots = zeros(num_tests, 2*num_robots);
 for test = 1:size(final_distances_robots, 1)
     dist_robot_robot = zeros(num_robots);
     dist_robot_robot(1, 2) = final_distances_robots(test, 1); % d12
