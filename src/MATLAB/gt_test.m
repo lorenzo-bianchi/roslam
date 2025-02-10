@@ -1,9 +1,8 @@
-%%
+q%%
 clear; close all; clc;
 
 %%
 n_anchors = 4;
-n_points = 9;
 n_robots = 3;
 video_name = 'test5';               % test1 no / test2 yes / test3 no / test4 yes / test5 fix / test6 ? / test7 yes / test8 fix?
 min_time = 2;

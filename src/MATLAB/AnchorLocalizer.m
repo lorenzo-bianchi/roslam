@@ -11,7 +11,7 @@ classdef AnchorLocalizer < handle
         rect_size
         use_debug
     end
-    
+
     methods
         function obj = AnchorLocalizer(n_anchors, area_threshold, hsv_min1, hsv_min2, hsv_max1, hsv_max2, rect_size, use_debug)
             % Constructor to initialize parameters
@@ -26,36 +26,36 @@ classdef AnchorLocalizer < handle
 
             obj.poses_frame = zeros(n_anchors, 2);
         end
-        
+
         function [poses_frame, rects] = localize(obj, frame, rects)
             [height, width, ~] = size(frame);
             poses_frame = obj.poses_frame;
-            
+
             for anchor = 1:obj.n_anchors
                 [x1, y1, x2, y2] = obj.clamp_coordinates(int32(rects(anchor, :)), width, height);
-                
+
                 patch = frame(y1:y2, x1:x2, :);
                 mask = obj.create_color_mask(patch);
-                
+
                 stats = regionprops(mask, 'BoundingBox', 'Area', 'Centroid');
                 if isempty(stats)
                     rects(anchor, :) = [poses_frame(anchor, 1:2) - 2 * obj.rect_size, ...
                                         poses_frame(anchor, 1:2) + 2 * obj.rect_size];
                     continue
                 end
-                
+
                 for j = 1:length(stats)
                     if stats(j).Area > obj.area_threshold
                         poses_frame(anchor, :) = stats(j).Centroid;
+                        poses_frame(anchor, :) = poses_frame(anchor, :) + rects(anchor, 1:2);
+                        poses_frame(anchor, 1) = max(1, min(poses_frame(anchor, 1), width));
+                        poses_frame(anchor, 2) = max(1, min(poses_frame(anchor, 2), height));
+                        rects(anchor, :) = obj.update_bounding_box(poses_frame(anchor, :), width, height);
+
                         break
                     end
                 end
-                
-                poses_frame(anchor, :) = poses_frame(anchor, :) + rects(anchor, 1:2);
-                poses_frame(anchor, 1) = max(1, min(poses_frame(anchor, 1), width));
-                poses_frame(anchor, 2) = max(1, min(poses_frame(anchor, 2), height));
-                rects(anchor, :) = obj.update_bounding_box(poses_frame(anchor, :), width, height);
-                
+
                 if obj.use_debug
                     figure(101);
                     nexttile;

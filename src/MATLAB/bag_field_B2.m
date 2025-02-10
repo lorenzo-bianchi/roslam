@@ -4,7 +4,7 @@ clc; close all; clear
 num_anchors = 4;
 num_points = 11;
 num_robots = 1;
-num_tests = 8;
+num_tests = 11;
 
 %%
 d12 = 1.80;
@@ -23,7 +23,7 @@ dist_anchors = [
 
 dist_anchors_points = [
     3.21 3.29 1.11 1.07;      % A
-    3.03 2.76 1.05 1.79;      % B      
+    3.03 2.76 1.05 1.79;      % B
     2.69 3.18 1.92 1.06;      % C
     2.26 2.45 1.81 1.74;      % D
     2.20 1.91 1.93 2.34;      % E
