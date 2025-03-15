@@ -177,6 +177,7 @@ for idx = 1:num_anchors+num_points
     xy = pts(key);
     if length(key) == 2
         num = key(2);
+        disp([xy(1), xy(2)])
         plot(xy(1), xy(2), 'rh', 'Linewidth', 2, 'MarkerSize', 12);
         text(xy(1), xy(2)+0.1, num2str(num), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'red');
     else

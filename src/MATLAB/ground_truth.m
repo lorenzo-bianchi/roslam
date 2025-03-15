@@ -2,7 +2,7 @@
 clear; close all; clc;
 
 %% Parameters
-test_case = 1;
+test_case = 2;
 
 if test_case == 1
     % B1
@@ -14,10 +14,10 @@ if test_case == 1
     min_times = [   0,  2,    0,    0,    0,    0,  7,    0];
     max_times = [1000, 86, 1000, 1000, 1000, 1000, 80, 1000];
 
-    anchors_poses_real= [    0.0,    0.0;
-                          1.7903,    0.0;
-                          1.7241, 3.6934;
-                         -0.1471, 3.7211];
+    anchors_poses_real = [    0.0,    0.0;
+                           1.7903,    0.0;
+                           1.7241, 3.6934;
+                          -0.1471, 3.7211];
 
     robots_last_poses = zeros(length(min_times), n_robots, 2);
     robots_last_poses(1, :, :) = [[ 0.1800, 0.2891]; [ 0.1119, 2.0519]; [1.1136, 1.8637]];
@@ -28,11 +28,18 @@ if test_case == 1
     robots_last_poses(6, :, :) = [[ 1.0710, 3.4887]; [ 0.2338, 1.1868]; [1.2776, 0.9613]];
     robots_last_poses(7, :, :) = [[-0.1876, 1.1250]; [ 0.9643, 1.8190]; [0.9052, 2.4240]];
     robots_last_poses(8, :, :) = [[ 0.9393, 2.7796]; [ 0.3895, 1.7389]; [1.6472, 1.3353]];
+
+    % robot_colors = lines(7);
+    % robot_colors = robot_colors(end-2:end, :);
+    robot_colors = [0.5660, 0.8740, 0.2880;
+                    0.3010, 0.7450, 0.9330;
+                    1.0000, 0.6500, 0.0000];
+    robot_colors_255 = round(robot_colors * 255);
 else
     % B2
     n_anchors = 7;
     n_robots = 1;
-    n_test = 2;
+    n_test = 5;         % 5 has problem
     test_name = ['B2_test', num2str(n_test)];       % B2:  B2_test1 / ... / B2_test11
     video_path = ['/media/lorenzo/52387916-e258-4af3-95a4-c8701e29a684/@home/lorenzo/Desktop/DJI/', test_name, '.MP4'];
     min_times = [  4,   1,   4,   9,   3,   4,   4,  14,  3,   8,   3];
@@ -46,6 +53,14 @@ else
                           0.7446, 3.1161
                          -0.3386, 2.1962
                           0.8853, 1.2402];
+    anchors_poses_real_all = [      0,      0
+                               1.7903,      0
+                               1.7241, 3.6934
+                              -0.1471, 3.7211
+                               2.0991, 1.8572
+                               0.7446, 3.1161
+                              -0.3386, 2.1962
+                               0.8853, 1.2402];
 
     robot_last_poses = [0.51, 0.34;
                         1.70, 0.75;
@@ -58,11 +73,17 @@ else
                         1.48, 1.22;
                         0.39, 0.95;
                         0.73, 2.23];
+
+
+    % robot_colors = lines(7);
+    % robot_colors = robot_colors(end-2:end, :);
+    robot_colors = [0.5660, 0.8740, 0.2880];
+    robot_colors_255 = round(robot_colors * 255);
 end
 
 min_time = min_times(n_test);
 max_time = max_times(n_test);
-pause_time = 0.05;
+pause_time = 0.001;
 skip_n_frames = 10;
 use_debug = false;
 make_gif = true;
@@ -74,13 +95,6 @@ anchors_rect_size = 300;
 robots_rect_size = 200;
 len_line = 100;
 forward_skip = 500;
-
-% robot_colors = lines(7);
-% robot_colors = robot_colors(end-2:end, :);
-robot_colors = [0.5660, 0.8740, 0.2880;
-                0.3010, 0.7450, 0.9330;
-                1.0000, 0.6500, 0.0000];
-robot_colors_255 = round(robot_colors * 255);
 
 % Red HSV
 anchors_h_min1 = 0;
@@ -144,7 +158,7 @@ else
     title(['Draw rectangles on FIXED ANCHORS in order from 1 to ', num2str(n_anchors)], 'FontSize', 15);
     hold on;
     for i = 1:n_anchors
-        h = drawrectangle('Color', robot_colors(robot, :), 'LineWidth', 2);
+        h = drawrectangle('LineWidth', 2);
         wait(h);  % Wait for user input
         pos = h.Position;  % Get rectangle position [x, y, width, height]
 
@@ -162,7 +176,7 @@ else
     end
     hold on;
     for i = 1:n_robots
-        h = drawrectangle('Color', robot_colors(robot, :), 'LineWidth', 2);
+        h = drawrectangle('LineWidth', 2);
         wait(h);  % Wait for user input
         pos = h.Position;  % Get rectangle position [x, y, width, height]
 
@@ -237,60 +251,60 @@ while hasFrame(video) && video.CurrentTime <= max_time
     rmse_history(end+1) = rmse;
 
     %% Plots
-    % Anchors
-    rects_xywh = [anchors_rects(:, 1), anchors_rects(:, 2), ...
-                  anchors_rects(:, 3) - anchors_rects(:, 1), ...
-                  anchors_rects(:, 4) - anchors_rects(:, 2)];
-    frame = insertShape(frame, 'Rectangle', rects_xywh, 'LineWidth', 10, 'Color', 'yellow', 'Opacity', 1);
-
-    centers = [anchors_poses_frame(:, 1), anchors_poses_frame(:, 2), 15*ones(n_anchors, 1)];
-    frame = insertShape(frame, 'FilledCircle', centers, 'Color', 'yellow', 'Opacity', 1);
-
-    % Robots
-    rects_xywh = [robots_rects(:, 1), robots_rects(:, 2), ...
-                  robots_rects(:, 3) - robots_rects(:, 1), ...
-                  robots_rects(:, 4) - robots_rects(:, 2)];
-    frame = insertShape(frame, 'Rectangle', rects_xywh, 'LineWidth', 10, 'Color', robot_colors_255, 'Opacity', 1);
-
-    angles = robots_poses_frame(:, 3);
-    x1 = robots_poses_frame(:, 1) + len_line * cos(angles);
-    y1 = robots_poses_frame(:, 2) + len_line * sin(angles);
-    x2 = robots_poses_frame(:, 1) - len_line * cos(angles);
-    y2 = robots_poses_frame(:, 2) - len_line * sin(angles);
-
-    centers = [robots_poses_frame(:, 1), robots_poses_frame(:, 2), 15*ones(n_robots, 1)];
-    frame = insertShape(frame, 'FilledCircle', centers, 'Color', robot_colors_255, 'Opacity', 1);
-    frame = insertShape(frame, 'Line', [x2, y2, x1, y1], 'LineWidth', 15, 'Color', robot_colors_255);
-
-    if mod(n_frame, skip_n_frames) ~= 0
-        continue
-    end
-    imshow(frame); hold on;
-
-    if n_frame == 0
-        title('Press ENTER', 'FontSize', 15)
-        pause()
-    else
-        title([num2str(n_frame)], 'FontSize', 15)
-
-        % Plot trajectories
-        if anchors_poses_frame(1, 1) > size(frame, 1) / 2
-            K = [0 -1; -1 0];
+    if make_gif
+        % Anchors
+        rects_xywh = [anchors_rects(:, 1), anchors_rects(:, 2), ...
+                      anchors_rects(:, 3) - anchors_rects(:, 1), ...
+                      anchors_rects(:, 4) - anchors_rects(:, 2)];
+        frame = insertShape(frame, 'Rectangle', rects_xywh, 'LineWidth', 10, 'Color', 'yellow', 'Opacity', 1);
+    
+        centers = [anchors_poses_frame(:, 1), anchors_poses_frame(:, 2), 15*ones(n_anchors, 1)];
+        frame = insertShape(frame, 'FilledCircle', centers, 'Color', 'yellow', 'Opacity', 1);
+    
+        % Robots
+        rects_xywh = [robots_rects(:, 1), robots_rects(:, 2), ...
+                      robots_rects(:, 3) - robots_rects(:, 1), ...
+                      robots_rects(:, 4) - robots_rects(:, 2)];
+        frame = insertShape(frame, 'Rectangle', rects_xywh, 'LineWidth', 10, 'Color', robot_colors_255, 'Opacity', 1);
+    
+        angles = robots_poses_frame(:, 3);
+        x1 = robots_poses_frame(:, 1) + len_line * cos(angles);
+        y1 = robots_poses_frame(:, 2) + len_line * sin(angles);
+        x2 = robots_poses_frame(:, 1) - len_line * cos(angles);
+        y2 = robots_poses_frame(:, 2) - len_line * sin(angles);
+    
+        centers = [robots_poses_frame(:, 1), robots_poses_frame(:, 2), 15*ones(n_robots, 1)];
+        frame = insertShape(frame, 'FilledCircle', centers, 'Color', robot_colors_255, 'Opacity', 1);
+        frame = insertShape(frame, 'Line', [x2, y2, x1, y1], 'LineWidth', 15, 'Color', robot_colors_255);
+    
+        if mod(n_frame, skip_n_frames) ~= 0
+            continue
+        end
+        imshow(frame); hold on;
+    
+        if n_frame == 0
+            title('Press ENTER', 'FontSize', 15)
+            pause()
         else
-            K = [0 1; 1 0];
-        end
-        meters_to_pixels = @(p_pixels) (((p_pixels - c1) / s) * R' + c2) * K + anchors_poses_frame(1, :);
-        for robot = 1:n_robots
-            trajectories = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
-            plot(trajectories(1:10:end, 1), trajectories(1:10:end, 2), 'Color', robot_colors(robot, :), 'LineStyle', '--');
-            % set(gcf, 'Renderer', 'Painters');
-            % pause(0.05)
-            % set(gcf, 'Renderer', 'OpenGL');
-        end
+            title([num2str(n_frame)], 'FontSize', 15)
+    
+            % Plot trajectories
+            if anchors_poses_frame(1, 1) > size(frame, 1) / 2
+                K = [0 -1; -1 0];
+            else
+                K = [0 1; 1 0];
+            end
+            meters_to_pixels = @(p_pixels) (((p_pixels - c1) / s) * R' + c2) * K + anchors_poses_frame(1, :);
+            for robot = 1:n_robots
+                trajectories = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
+                plot(trajectories(1:10:end, 1), trajectories(1:10:end, 2), 'Color', robot_colors(robot, :), 'LineStyle', '--');
+                % set(gcf, 'Renderer', 'Painters');
+                % pause(0.05)
+                % set(gcf, 'Renderer', 'OpenGL');
+            end
 
-        pause(pause_time)
+            pause(pause_time)
 
-        if make_gif
             set(gca, 'Visible', 'off');
             drawnow
             frame = getframe(gca);
@@ -326,6 +340,12 @@ end
 % drawnow;
 % pause(1);
 
+if anchors_poses_frame(1, 1) > size(frame, 1) / 2
+    K = [0 -1; -1 0];
+else
+    K = [0 1; 1 0];
+end
+meters_to_pixels = @(p_pixels) (((p_pixels - c1) / s) * R' + c2) * K + anchors_poses_frame(1, :);
 last_trajectories = zeros(size(robots_poses_world_history, 1), n_robots, 2);
 for robot = 1:n_robots
     last_trajectories(:, robot, :) = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
@@ -349,7 +369,7 @@ save(['./data/gt_', test_name, '.mat'], ...
       'anchors_min2', ...
       'anchors_max1', ...
       'anchors_max2', ...
-      'anchors_poses_real', ...
+      'anchors_poses_real_all', ...
       'anchors_rect_size', ...
       'last_frame', ...
       'last_trajectories', ...
@@ -515,6 +535,8 @@ else
     xlabel('Samples');
     ylabel('x [m]');
     grid on;
+    axis padded;
+    xlim([0, inf]);
     set(gca, 'FontSize', font_size, 'FontWeight', 'bold');
 
     % Subplot 2: Y coordinate
@@ -524,6 +546,8 @@ else
     xlabel('Samples');
     ylabel('y [m]');
     grid on;
+    axis padded;
+    xlim([0, inf]);
     set(gca, 'FontSize', font_size, 'FontWeight', 'bold');
 
     % Subplot 3: Theta (unwrapped)
@@ -533,6 +557,8 @@ else
     xlabel('Samples');
     ylabel('\theta [rad]');
     grid on;
+    axis padded;
+    xlim([0, inf]);
     set(gca, 'FontSize', font_size, 'FontWeight', 'bold');
 
 
@@ -546,20 +572,20 @@ else
     plot(x(end), y(end), 'ro', 'MarkerSize', 8, 'MarkerFaceColor', 'r'); % End
 
     % Plot anchors as black 'X' markers
-    plot(anchors_poses_real(:, 1), anchors_poses_real(:, 2), 'rh', 'MarkerSize', 12, 'LineWidth', 2, 'HandleVisibility', 'off');
+    plot(anchors_poses_real_all(:, 1), anchors_poses_real_all(:, 2), 'rh', 'MarkerSize', 12, 'LineWidth', 2, 'HandleVisibility', 'off');
 
     % Add anchor labels
-    for i = 1:size(anchors_poses_real, 1)
-        text(anchors_poses_real(i, 1) - 0.05, anchors_poses_real(i, 2) + 0.1, ...
-             ['A', num2str(i)], 'FontSize', font_size, 'FontWeight', 'bold', 'Color', 'r');
+    for i = 1:size(anchors_poses_real_all, 1)
+        text(anchors_poses_real_all(i, 1), anchors_poses_real_all(i, 2) + 0.12, ...
+             ['A', num2str(i)], 'HorizontalAlignment', 'Center', 'FontSize', font_size, 'FontWeight', 'bold', 'Color', 'r');
     end
 
     title('XY Trajectory');
     xlabel('x [m]');
     ylabel('y [m]');
-    legend('Start', 'End', 'Location', 'north');
-    xlim([min(anchors_poses_real(:,1))-0.2, max(anchors_poses_real(:,1))+0.2]);
-    ylim([min(anchors_poses_real(:,2))-0.2, max(anchors_poses_real(:,2))+0.2]);
+    legend('Start', 'End', 'Location', 'northeast');
+    xlim([min(anchors_poses_real_all(:,1))-0.2, max(anchors_poses_real_all(:,1))+0.2]);
+    ylim([min(anchors_poses_real_all(:,2))-0.2, max(anchors_poses_real_all(:,2))+0.2]);
     axis equal;
     grid on;
     hold off;

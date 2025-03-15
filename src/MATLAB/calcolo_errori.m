@@ -50,7 +50,7 @@ for robot = 1:nRobot
         erroriMediPostICP(robot) = mean(vecnorm(cTag' - temp));
     end
 
-    if sharing
+    if pruning && sharing
         ids = global_poses(robot).ids;
         point1 = cTag(ids(1), :);
         point2 = cTag(ids(2), :);
@@ -111,7 +111,7 @@ for robot = 1:nRobot
         fprintf("\tMedia distanze tag post ICP: ")
         fprintf("%.3f ", erroriMediPostICP);
         fprintf("\n\n");
-        if sharing
+        if pruning && sharing
             fprintf("\tErrori tag post globalize: ")
             fprintf("%.3f ", global_errors_tags);
             fprintf("\n");

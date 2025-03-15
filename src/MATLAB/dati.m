@@ -1,8 +1,8 @@
-seed = 34;  %34
+seed = 33;  %34
 rng(seed)
 
 DISEGNA_ANIMAZIONE = 0;
-DISEGNA_ULTIMO = 0;
+DISEGNA_ULTIMO = 1;
 DISEGNA_PLOT = 0;
 DISEGNA_ICP = 0;
 DISEGNA_VAR = 0;
@@ -11,15 +11,15 @@ displayErrori = 0;
 
 data = struct();
 
-nRobot = 10;
+nRobot = 6;
 
-nPassi = 1500;
+nPassi = 4000;
 nPhi = 8; % numero ipotesi angolo (si può poi variare in funzione della distanza misurata)
 pruning = 1;
 minZerosStartPruning = ceil(nPhi*0.3);
 stepStartPruning0 = 10;         % mettere valore piccolo per evitare errori iniziali
 stepStartPruning = repmat({stepStartPruning0}, 1, nRobot);
-sharing = 1;
+sharing = 0;
 stepStartSharing = 600;
 reset = 1;
 resetThr = 20;
@@ -36,9 +36,7 @@ numIterationsB = 120;       % this tag -> other tags
 distanceThresholdB = 0.1;
 percentMinInliersB = 0.6;
 
-
-
-Nstep = 10; % passi tra una misura e la successiva
+Nstep = 1; % passi tra una misura e la successiva
 possibiliPhi = linspace(-pi+2*pi/nPhi, pi, nPhi);
 sigmaPhi = 2*pi/(1.5*nPhi); %pi/(3*nPhi);
 
@@ -71,7 +69,7 @@ KL = KLvera; %*1.01;
 %         2.0 2.0];
 % [nTag, ~] = size(cTag);
 
-nTag = 10;
+nTag = 8;
 cTag = 0.9*L*rand(nTag, 2) + 0.05*L;
 
 data.nPassi = nPassi;

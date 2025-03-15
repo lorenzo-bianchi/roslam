@@ -28,7 +28,7 @@ def generate_launch_description():
     ld.add_action(config_file_launch_arg)
 
     namespace = LaunchConfiguration('namespace')
-    namespace_launch_arg = DeclareLaunchArgument('namespace', default_value='robot1')
+    namespace_launch_arg = DeclareLaunchArgument('namespace', default_value='robot6')
     ld.add_action(namespace_launch_arg)
 
     # Create node launch description
@@ -44,7 +44,10 @@ def generate_launch_description():
         remappings=[('/joint_states', ['/', namespace, '/joint_states']),
                     ('/uwb_tag', ['/', namespace, '/uwb_tag']),
                     ('/debug', ['/', namespace, '/debug']),
-                    ('/visualization/landmarks', ['/', namespace, '/visualization/landmarks'])],
+                    ('/visualization/landmarks', ['/', namespace, '/visualization/landmarks']),
+                    ('/estimated_pose', ['/', namespace, '/estimated_pose']),
+                    ('/estimated_landmarks', ['/', namespace, '/estimated_landmarks']),
+                   ],
     )
     ld.add_action(node)
 

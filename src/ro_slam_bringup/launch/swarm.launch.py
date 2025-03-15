@@ -13,10 +13,14 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+import sys
+sys.path.append("/home/neo/workspace/")
+from update_yaml import update_params
+
 def generate_launch_description():
     ld = LaunchDescription()
 
-    n_robots = 2
+    n_robots = 6
 
     # Check if user specified the number of robots
     for arg in sys.argv:
@@ -25,8 +29,10 @@ def generate_launch_description():
 
     launch_file_path = os.path.join(
         get_package_share_directory('ro_slam_py'), 'launch', 'ro_slam_py.launch.py')
-    config_file_path = os.path.join(
-        get_package_share_directory('ro_slam_bringup'), 'config', 'swarm.yaml')
+    config_file_path_alias = os.path.join(
+        get_package_share_directory('ro_slam_bringup'), 'config', 'swarm_alias.yaml')
+
+    config_file_path = update_params(config_file_path_alias)
 
     # Launch the robots
     for robot_id in range(1, n_robots+1):

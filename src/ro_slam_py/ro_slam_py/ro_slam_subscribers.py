@@ -33,9 +33,14 @@ def uwb_array_clbk(self, msg: UwbArray):
         for anchor in msg.uwbs:
             distances[anchor.id] = anchor.dist
 
+    distances += self.bias_range
+
+    if self.corrupt_measurement_enable:
+        distances += np.random.normal(self.corrupt_measurement_bias, self.corrupt_measurement_sigma, distances.shape)
+
     tic = time.time()
     self.fed_ekf.correction(distances)
-    print(f"Correction time: {time.time() - tic}")
+    # print(f"Correction time: {time.time() - tic}")
 
     if self.pruning_enable:
         self.fed_ekf.pruning()
@@ -62,12 +67,11 @@ def uwb_array_clbk(self, msg: UwbArray):
                 landmark.cov_xy = float(tag['cov_xy'])
                 landmark_array_msg.landmarks.append(landmark)
             self.landmark_pub.publish(landmark_array_msg)
-        self.publish_tags()
 
     self.broadcast_pose()
 
-    print(self.fed_ekf.weights)
-    print()
+    # print(self.fed_ekf.weights)
+    # print()
 
 
 def odometry_clbk(self, msg: JointState):
@@ -78,7 +82,7 @@ def odometry_clbk(self, msg: JointState):
         self.get_logger().error('Invalid JointState message')
         return
 
-    print(self.fed_ekf.k + 2)
+    # print(self.fed_ekf.k + 2)
 
     if 'right' in msg.name[0]:
         right_idx = 0
@@ -95,24 +99,15 @@ def odometry_clbk(self, msg: JointState):
 
     tic = time.time()
     self.fed_ekf.prediction(vel_wheel_right, vel_wheel_left)
-    print(f"Prediction time: {time.time() - tic}")
+    # print(f"Prediction time: {time.time() - tic}")
 
     self.broadcast_pose()
 
-    print(self.fed_ekf.x_hat_slam)
-    print()
+    # print(self.fed_ekf.x_hat_slam)
+    # print()
 
 
-def landmark_array_clbk(self, msg: LandmarkArray):
-    """
-    Landmark array callback
-    """
-    if msg.id == self.robot_id:
-        return
-
-    print(f"Received shared landmarks from robot {msg.id}")
-
-# TODO: remove
+# For Matlab tests
 def landmark_array_test_clbk(self, msg: LandmarkArray):
     """
     Landmark array callback
@@ -133,7 +128,7 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
         profiler.enable()
         tic = time.time()
         self.fed_ekf.correction_shared(this_robot, self.shared_data)
-        print(f'Correction shared time: {time.time() - tic}')
+        # print(f'Correction shared time: {time.time() - tic}')
         profiler.disable()
         profiler.dump_stats(f'logs/profiler_{self.fed_ekf.k}.prof')
 
@@ -149,7 +144,7 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
 
             tic = time.time()
             self.fed_ekf.reset()
-            print(f"Reset time: {time.time() - tic}")
+            # print(f"Reset time: {time.time() - tic}")
 
         self.shared_data = np.array([])
         return
@@ -163,3 +158,65 @@ def landmark_array_test_clbk(self, msg: LandmarkArray):
     data.tags_vars = tags_vars
 
     self.shared_data = np.append(self.shared_data, data)
+
+def landmark_array_clbk(self, msg: LandmarkArray):
+    """
+    Landmark array callback
+    """
+    # Do not consider data from the same robot
+    if msg.id == self.robot_id:
+        return
+
+    # print(f"Received shared landmarks from robot {msg.id}")
+
+    # Check if a new robot is sharing data
+    if self.other_robots_idx.get(msg.id) is None:
+        print(f"Robot {msg.id} is sharing data")
+
+    # Update shared data
+    tags_positions = np.array([[l.x, l.y] for l in msg.landmarks]).T
+    tags_vars = np.array([[l.var_x, l.var_y, l.cov_xy] for l in msg.landmarks]).T
+
+    data = FedEkfSharedData()
+    data.robot_id = msg.id
+    data.tags_positions = tags_positions
+    data.tags_vars = tags_vars
+
+    self.shared_data[msg.id] = data
+    self.other_robots_idx[msg.id] = True
+
+    if len(self.other_robots_idx) > 1 and all(self.other_robots_idx.values()):
+        this_robot = FedEkfSharedData()
+        this_robot.robot_id = self.robot_id
+        this_robot.tags_positions = np.array([[l['x'], l['y']] for l in self.tags_poses]).T
+        this_robot.tags_vars = np.array([[l['var_x'], l['var_y'], l['cov_xy']] for l in self.tags_poses]).T
+
+        profiler = cProfile.Profile()
+        profiler.enable()
+        tic = time.time()
+        # transform self.shared_data to a list
+        shared_data_array = np.array(list(self.shared_data.values()))
+        self.fed_ekf.correction_shared(this_robot, shared_data_array)
+        # print(f'Correction shared time: {time.time() - tic}')
+        profiler.disable()
+        profiler.dump_stats(f'logs/profiler_{self.fed_ekf.k}.prof')
+
+        if self.pruning_enable:
+            self.fed_ekf.pruning()
+
+        if self.reset_enable and self.fed_ekf.do_reset:
+            # TODO: find a way to get real position at reset
+
+            time_reset = self.get_clock().now().nanoseconds
+            self.get_logger().info(f'Robot {self.robot_id} resetting at t = {time_reset}')
+            self.t_resets.append((self.fed_ekf.k, time_reset))
+
+            tic = time.time()
+            self.fed_ekf.reset()
+            self.corrupt_measurement_enable = False
+            self.reset_enable = False
+            # print(f"Reset time: {time.time() - tic}")
+
+        self.shared_data = {}
+        self.other_robots_idx = {k: False for k in self.other_robots_idx.keys()}
+        return

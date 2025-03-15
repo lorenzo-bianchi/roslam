@@ -795,6 +795,10 @@ classdef FedEkf < handle
                 otherRobotTagsRot = T*[otherRobotTags; ones(1, nTag)];
                 posTagRobot(:, :, end+1) = otherRobotTagsRot(1:2, :);
             end
+            if size(posTagRobot, 3) == 0
+                structCondivisa = struct('ids', [], 'use_avg', [], 'pose', [], 'tags', []);
+                return
+            end
 
             point1_idx = 0;
             point2_idx = 0;

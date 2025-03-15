@@ -122,6 +122,9 @@ class FedEkf:
         for idx in range(self.n_tags):
             self.P[3+dim_h*idx:3+dim_h*(idx+1),
                    3+dim_h*idx:3+dim_h*(idx+1)] = P_tag
+        self.initial_distances = np.zeros((self.n_tags, ), dtype=mtype)
+        self.initial_x = np.zeros((self.n_tags, ), dtype=mtype)
+        self.initial_y = np.zeros((self.n_tags, ), dtype=mtype)
 
     def prediction(self, vel_wheel_right: float, vel_wheel_left: float):
         self.k += 1
@@ -154,15 +157,25 @@ class FedEkf:
         # P computation
         self.P = multi_dot([self.F, self.P, self.F.T]) + multi_dot([self.W, Q, self.W.T])
 
-        print('Prediction step done')
+        # print('Prediction step done')
 
     def correction(self, distances: np.ndarray):
         if self.first_correction:
             # Initialize state vector with ranges
-            self.first_correction = False
-            self.x_hat_slam[3::3+self.n_phi_max] = self.x_hat_slam[0]
-            self.x_hat_slam[4::3+self.n_phi_max] = self.x_hat_slam[1]
-            self.x_hat_slam[5::3+self.n_phi_max] = distances
+            for i in range(distances.shape[0]):
+                if distances[i] != np.inf:
+                    self.initial_x[i] = self.x_hat_slam[0]
+                    self.initial_y[i] = self.x_hat_slam[1]
+                    self.initial_distances[i] = distances[i]
+
+            if np.all(self.initial_distances != 0.0):
+                self.x_hat_slam[3::3+self.n_phi_max] = self.initial_x
+                self.x_hat_slam[4::3+self.n_phi_max] = self.initial_y
+                self.x_hat_slam[5::3+self.n_phi_max] = self.initial_distances
+
+                self.first_correction = False           # TODO: check if first_correction = True goes also after reset
+            else:
+                return
 
         self.last_distances = distances
         n_tags = self.n_tags
@@ -222,7 +235,7 @@ class FedEkf:
 
         # Update a posteriori estimate
         kalman_gain = multi_dot([self.P, self.H.T, \
-                                 pinv(multi_dot([self.H, self.P, self.H.T]) + self.Rs)])
+                                   pinv(multi_dot([self.H, self.P, self.H.T]) + self.Rs)])
         self.x_hat_slam += kalman_gain @ self.innovation
         I = np.eye(np.sum(self.x_hat_indices), dtype=mtype)
         self.P = (I - kalman_gain @ self.H) @ self.P
@@ -230,7 +243,7 @@ class FedEkf:
         # Update weights
         self.weights /= np.sum(self.weights, axis=1, keepdims=True)
 
-        print('Correction step done')
+        # print('Correction step done')
 
     def delete_rows_cols(self, idx_tag: int, idx_phi: int):
         temp = self.weights[idx_tag, idx_phi+1:]
@@ -264,13 +277,10 @@ class FedEkf:
             self.update_deque()
             return
 
-        if self.k == 719:
-            a = 1
-
         n_tags = self.n_tags
         change = False
 
-        pruning_thr = np.minimum(5e-2, 0.00001 * (self.k+1))
+        pruning_thr = np.minimum(5e-1, 0.0001 * (self.k+1))
 
         # Check if at least hyps_steps_start_pruning hypotheses have weights below threshold
         if np.any(self.hyps_steps_start_pruning == 0):
@@ -691,6 +701,7 @@ class FedEkf:
         self.hyps_steps_start_pruning = np.zeros((self.n_tags, ), dtype=np.uint16)
 
         self.do_reset = False
+        self.first_correction = True
         self.vars_deque.clear()
         self.reset_counter = 0
         self.pruning_min_step_to_start += self.k + 1

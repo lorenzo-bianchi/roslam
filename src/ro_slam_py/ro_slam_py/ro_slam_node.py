@@ -6,6 +6,7 @@ from threading import Thread, Lock
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Empty
 from ro_slam_interfaces.msg import UwbArray, LandmarkArray
@@ -20,7 +21,7 @@ class ROSlamNode(Node):
     # Import methods
     from .ro_slam_params import init_parameters
     from .ro_slam_subscribers import debug_clbk, uwb_array_clbk, odometry_clbk, landmark_array_clbk, landmark_array_test_clbk
-    from .ro_slam_utils import broadcast_pose, publish_tags
+    from .ro_slam_utils import broadcast_pose, publish_pose_landmarks
 
 
     def __init__(self):
@@ -50,6 +51,7 @@ class ROSlamNode(Node):
         self.robot_id = int(re.findall(r"\d+$", self.get_namespace())[0])
         self.t_resets = []
         self.actual_step_start_sharing = -1
+        self.other_robots_idx = {}
 
         self.data = FedEkfData()
         self.data.n_tags = self.n_tags
@@ -82,7 +84,7 @@ class ROSlamNode(Node):
         from itertools import combinations
         self.data.combs = list(combinations(range(self.data.n_tags), 3))
 
-        self.shared_data = np.empty((0, ), dtype=object)
+        self.shared_data = {}
         self.tags_poses: np.ndarray = None
 
         x0 = np.array([0.0, 0.0, 0.0])
@@ -115,6 +117,13 @@ class ROSlamNode(Node):
         """
         Init publishers
         """
+        # Estimated pose
+        self.pose_pub = self.create_publisher(
+            PoseWithCovarianceStamped,
+            '/estimated_pose',
+            qos_best_effort
+        )
+
         # Visualization landmarks
         self.tags_pub = self.create_publisher(
             MarkerArray,
@@ -126,6 +135,13 @@ class ROSlamNode(Node):
         self.landmark_pub = self.create_publisher(
             LandmarkArray,
             '/shared_landmarks',
+            qos_best_effort
+        )
+
+        # Estimated landmarks
+        self.landmark_est_pub = self.create_publisher(
+            LandmarkArray,
+            '/estimated_landmarks',
             qos_best_effort
         )
 
@@ -178,7 +194,6 @@ class ROSlamNode(Node):
             callback_group=self.landmark_array_cgroup
         )
 
-
     def init_timers(self):
         """
         Init timers
@@ -186,5 +201,11 @@ class ROSlamNode(Node):
         self.tf_timer = self.create_timer(
             4,
             lambda: self.broadcast_pose(),
+            callback_group=self.tf_timer_cgroup
+        )
+
+        self.pose_landmarks_timer = self.create_timer(
+            1 / 10,
+            lambda: self.publish_pose_landmarks(),
             callback_group=self.tf_timer_cgroup
         )

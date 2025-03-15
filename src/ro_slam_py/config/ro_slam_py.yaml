@@ -1,116 +1,25 @@
-/robot1/ro_slam_py:
+/robot6/ro_slam_py:
   ros__parameters:
-    frame_local: robot1/base_footprint
-    frame_odom: robot1/odom
+    bias_range: 0.12
+    frame_local: robot6/base_footprint
+    frame_odom: robot6/odom
+    kl: 0.001
+    kr: 0.001
+    n_phi: 16
+    n_tags: 8
+    pruning: {dim_deque: 10, enable: true, min_step_to_start: 100}
+    reset: {enable: true, min_steps: 100, min_tags_converged: 3}
     robot_color: [1.0, 0.0, 0.0]
+    roma2D: {distance_threshold_post: 0.1, distance_threshold_pre: 0.2, num_iterations_post: 120,
+      num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
+    sharing: {enable: true, min_step_to_start: 400}
     show_tags_var: false
-    uwb_id_order: ['']              #['44AE', '5723', '8192', '08B0']
-    wheel_radius: 0.033
-    wheels_separation: 0.16
-
-    pruning:
-      enable: true
-      dim_deque: 10
-      min_step_to_start: 10
-
-    sharing:
-      use_sharing: true
-      min_step_to_start: 400
-
-    reset:
-      enable: true
-      min_steps: 10
-      min_tags_converged: 3
-
-    n_tags: 10
-    n_phi: 8
     sigma_range: 0.3
     sigma_shared: 0.5
-    roma2D:
-      num_iterations_pre: 120
-      distance_threshold_pre: 0.2
-      percent_min_inliers_pre: 0.4
-      num_iterations_post: 120
-      distance_threshold_post: 0.1
-      percent_min_inliers_post: 0.6
-
-    kr: 0.0001
-    kl: 0.0001
-
-# /robot2/ro_slam_py:
-  # ros__parameters:
-  #   frame_local: robot2/base_footprint
-  #   frame_odom: robot2/odom
-  #   robot_color: [1.0, 0.0, 0.0]
-  #   show_tags_var: false
-  #   uwb_id_order: ['']              #['139C', '9128']
-  #   wheel_radius: 0.033
-  #   wheels_separation: 0.16
-
-  #   pruning:
-  #     enable: true
-  #     dim_deque: 10
-  #     min_step_to_start: 10
-
-  #   sharing:
-  #     use_sharing: true
-  #     min_step_to_start: 400
-
-  #   reset:
-  #     enable: true
-  #     min_steps: 10
-  #     min_tags_converged: 3
-
-  #   n_tags: 10
-  #   n_phi: 8
-  #   sigma_range: 0.3
-  #   sigma_shared: 0.5
-  #   roma2D:
-  #     num_iterations_pre: 120
-  #     distance_threshold_pre: 0.2
-  #     percent_min_inliers_pre: 0.4
-  #     num_iterations_post: 120
-  #     distance_threshold_post: 0.1
-  #     percent_min_inliers_post: 0.6
-
-  #   kr: 0.0001
-  #   kl: 0.0001
-
-  # /robot3/ro_slam_py:
-  # ros__parameters:
-  #   frame_local: robot3/base_footprint
-  #   frame_odom: robot3/odom
-  #   robot_color: [1.0, 0.0, 0.0]
-  #   show_tags_var: false
-  #   uwb_id_order: ['']              #['4A21']
-  #   wheel_radius: 0.033
-  #   wheels_separation: 0.16
-
-  #   pruning:
-  #     enable: true
-  #     dim_deque: 10
-  #     min_step_to_start: 10
-
-  #   sharing:
-  #     use_sharing: true
-  #     min_step_to_start: 400
-
-  #   reset:
-  #     enable: true
-  #     min_steps: 10
-  #     min_tags_converged: 3
-
-  #   n_tags: 10
-  #   n_phi: 8
-  #   sigma_range: 0.3
-  #   sigma_shared: 0.5
-  #   roma2D:
-  #     num_iterations_pre: 120
-  #     distance_threshold_pre: 0.2
-  #     percent_min_inliers_pre: 0.4
-  #     num_iterations_post: 120
-  #     distance_threshold_post: 0.1
-  #     percent_min_inliers_post: 0.6
-
-  #   kr: 0.0001
-  #   kl: 0.0001
+    uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
+    wheel_radius: 0.033
+    wheels_separation: 0.16
+    corrupt_measurement:
+      enable: True
+      sigma: 0.5
+      bias: 0.5
