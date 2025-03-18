@@ -38,7 +38,7 @@ end
 clear temp
 
 %% Read bag and topics names
-test = 6;
+test = 5;
 bag_name = ['20250314_test', num2str(test)];
 path_prefix = '/home/lorenzo/Github/University/turtlebot3-utv-fork/logs/';
 full_path = strcat(path_prefix, bag_name, '/', bag_name, '_0.db3');
@@ -74,11 +74,11 @@ for i = 1:length(all_topics)
 end
 
 %% Summary
-fprintf('Duration: %.2f s\n', t_end-t_start);
+fprintf('Duration: %.4f s\n', t_end-t_start);
 fprintf('Found: %d robots, %d anchors\n', n_robots, n_anchors);
 fprintf('Anchors in positions:\n');
 for i = 1:length(pos_anchors)
-    fprintf('\t- (%.2f, %.2f)\n', pos_anchors(i,1), pos_anchors(i,2));
+    fprintf('\t- (%.4f, %.4f)\n', pos_anchors(i,1), pos_anchors(i,2));
 end
 fprintf('Available topics:\n');
 for name = topics_names
@@ -736,14 +736,18 @@ set(gcf, 'Position', [100, 100, 1000, 1600]);
 
 T = tiledlayout(length(est_pose_topics_names), 1, 'TileSpacing', 'Loose', 'Padding', 'Compact');
 
+gt_errors_pos = cell(n_robots, 1);
+gt_errors_angle = cell(n_robots, 1);
+times = cell(n_robots, 1);
+idx_convergence = zeros(n_robots, 1);
+
 tf = 120;
 for i = 1:n_robots
     data_gt = squeeze(gt_data(i).robots_poses_world_history);
 
-    new_points = 600;
-    inizio = repmat(data_gt(1, :), new_points / 2, 1);
-    fine = repmat(data_gt(end, :), new_points / 2, 1);
-    data_gt = [inizio; data_gt; fine];
+    new_points = 1000;
+    points_end = repmat(data_gt(end, :), new_points, 1);
+    data_gt = [data_gt; points_end];
     times_gt = linspace(1, (gt_data(i).n_frame + new_points) / gt_data(i).fps, size(data_gt, 1));
 
     x_gt = data_gt(:, 1);
@@ -753,9 +757,12 @@ for i = 1:n_robots
     len_bag = size(est_pose_data_cell{i}, 1);
     xy_lnds_w = zeros(len_bag, 8, 2);
     xy_robot_w = zeros(len_bag, 2);
+    theta_robot_w = zeros(len_bag, 1);
+    first_time = true;
     for k = 1:len_bag
         xy_lnds = [est_lnds_data{i}.x(k, :)', est_lnds_data{i}.y(k, :)'];
         xy_robot = est_pose_data_cell{i}(k, 2:3);
+        theta_robot = est_pose_data_cell{i}(k, 4);
         if k < len_bag / 3
             n_inl = 5;
         elseif k < 2 * len_bag / 3
@@ -766,8 +773,14 @@ for i = 1:n_robots
         [R, t, inl] = ransacRototranslation(xy_lnds, pos_anchors, 1000, 0.4-0.2*k/len_bag, 7);
         if isempty(inl)
             xy_robot_w(k, :) = rototranslation(xy_robot, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
+            theta_robot_w(k, 1) = theta_robot + initial_poses_gt(i, 3);
         else
+            if first_time
+                first_time = false;
+                idx_convergence(i) = k;
+            end
             xy_robot_w(k, :) = (R * xy_robot' + t)';
+            theta_robot_w(k, 1) = theta_robot + atan2(R(2,1), R(1,1));
         end
     end
 
@@ -775,7 +788,7 @@ for i = 1:n_robots
     times_est = data_est(:, 1);
     x_est = xy_robot_w(:, 1);
     y_est = xy_robot_w(:, 2);
-    theta_est = unwrap(data_est(:, 4)) + theta_gt(1);
+    theta_est = unwrap(theta_robot_w(:, 1)); % + theta_gt(1);
 
     vx_est = diff(x_est) ./ diff(times_est);
     vy_est = diff(y_est) ./ diff(times_est);
@@ -800,6 +813,13 @@ for i = 1:n_robots
     y_gt = y_gt(idx_gt_start:end);
     theta_gt = theta_gt(idx_gt_start:end);
     times_gt = times_gt(idx_gt_start:end) - t_start_gt;
+    x_gt = interp1(times_gt, x_gt, times_est, 'linear');
+    y_gt= interp1(times_gt, y_gt, times_est, 'linear');
+    theta_gt = interp1(times_gt, theta_gt, times_est, 'linear');
+    times_gt = times_est;
+    x_gt(isnan(x_gt)) = x_gt(find(~isnan(x_gt), 1, 'first'));
+    y_gt(isnan(y_gt)) = y_gt(find(~isnan(y_gt), 1, 'first'));
+    theta_gt(isnan(theta_gt)) = theta_gt(find(~isnan(theta_gt), 1, 'first'));
 
     t = tiledlayout(T, 1, 3, 'TileSpacing', 'Loose', 'Padding', 'Compact');
     t.Layout.Tile = i;
@@ -836,29 +856,120 @@ for i = 1:n_robots
     xlabel('time [s]');
     ylabel('\theta [rad]');
     set(ax3, 'FontSize', 12, 'FontWeight', 'bold');
+
+    gt_errors_pos{i} = sqrt((x_gt - x_est).^2 + (y_gt- y_est).^2);
+    gt_errors_angle{i} = abs(theta_gt - theta_est);
+    times{i} = times_gt;
+
+    diff_xy = diff(gt_errors_pos{i});
+    idx_stop = find(abs(diff_xy) < 1e-4);
+    if isempty(idx_stop)
+        idx_stop = length(x_gt);
+    else
+        last_one = find(diff(idx_stop) ~= 1, 1, 'last') + 1;
+        if isempty(last_one)
+            last_one = 1;
+        end
+        idx_stop = idx_stop(last_one);
+    end
+
+    gt_errors_pos{i} = gt_errors_pos{i}(1:idx_stop);
+    gt_errors_angle{i} = gt_errors_angle{i}(1:idx_stop);
+    times{i} = times{i}(1:idx_stop);
+end
+
+%% Ground truth + Estimated poses (errors)
+figure;
+set(gcf, 'Position', [100, 100, 1000, 1600]);
+
+T = tiledlayout(length(est_pose_topics_names), 1, 'TileSpacing', 'Loose', 'Padding', 'Compact');
+
+tf = 120;
+for i = 1:n_robots
+    t = tiledlayout(T, 1, 2, 'TileSpacing', 'Loose', 'Padding', 'Compact');
+    t.Layout.Tile = i;
+    t.Title.String = sprintf('Robot %d', i);
+    t.Title.FontWeight = 'bold';
+    t.Title.FontSize = 12;
+
+    ax1 = nexttile(t, 1);
+    err_pos = gt_errors_pos{i};
+    plot(times{i}, err_pos, 'r', 'LineWidth', 1);
+    grid on;
+    hold on;
+    plot(times_est, repmat(mean(err_pos), 1, size(times_est, 1)), 'k--', 'LineWidth', 1);
+    plot(times_est, repmat(mean(err_pos(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', 1);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', 1);
+    xlim([1 tf]);
+    xlabel('time [s]');
+    ylabel('e_{xy} [m]');
+    set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
+
+    ax2 = nexttile(t, 2);
+    err_angle = gt_errors_angle{i};
+    plot(times{i}, err_angle, 'b', 'LineWidth', 1);
+    grid on;
+    hold on;
+    plot(times_est, repmat(mean(err_angle), 1, size(times_est, 1)), 'k--', 'LineWidth', 1);
+    plot(times_est, repmat(mean(err_angle(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', 1);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', 1);
+    xlim([1 tf]);
+    xlabel('time [s]');
+    ylabel('e_\theta [rad]');
+    set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
 end
 
 %% Print results
+fd = fopen(['data/errors_', bag_name, '.txt'], 'w');
+
+fprintf("Position error robots:\n")
+fprintf(fd, "Position error robots:\n");
+for robot = 1:n_robots
+    error_pos = mean(gt_errors_pos{robot});
+    fprintf(" - Robot %d: %.4f m\n", robot, error_pos)
+    fprintf(fd, " - Robot %d: %.4f m\n", robot, error_pos);
+end
+fprintf("\n")
+fprintf(fd, "\n");
+
+fprintf("Angle error robots:\n")
+fprintf(fd, "Angle error robots:\n");
+for robot = 1:n_robots
+    error_angle = mean(gt_errors_angle{robot});
+    fprintf(" - Robot %d: %.4f rad\n", robot, error_angle)
+    fprintf(fd, " - Robot %d: %.4f rad\n", robot, error_angle);
+end
+fprintf("\n")
+fprintf(fd, "\n");
+
 fprintf("Final position error robots:\n")
+fprintf(fd, "Final position error robots:\n");
 for robot = 1:n_robots
     error_final_pos = norm(ending_poses_gt(robot, 1:2) - ending_poses_est(robot, :));
-    fprintf(" - Robot %d: %.2f m\n", robot, error_final_pos)
+    fprintf(" - Robot %d: %.4f m\n", robot, error_final_pos)
+    fprintf(fd, " - Robot %d: %.4f m\n", robot, error_final_pos);
 end
-fprintf("\n") 
+fprintf("\n")
+fprintf(fd, "\n");
 
 fprintf("Landmarks errors after RoMa:\n")
+fprintf(fd, "Landmarks errors after RoMa:\n");
 for robot = 1:n_robots
     xy_lnds = [est_lnds_data{robot}.x(end, :)', est_lnds_data{robot}.y(end, :)'];
     [R, t, inl] = ransacRototranslation(xy_lnds, pos_anchors, 1000, 0.3, 7);
     xy_lnds_post_roma = (R * xy_lnds' + t)';
     error_post_roma = mean(vecnorm(xy_lnds_post_roma - pos_anchors, 2, 2));
-    fprintf(" - Robot %d: %.2f m\n", robot, error_post_roma)
+    fprintf(" - Robot %d: %.4f m\n", robot, error_post_roma)
+    fprintf(fd, " - Robot %d: %.4f m\n", robot, error_post_roma);
 end
 fprintf("\n")
+fprintf(fd, "\n");
 
 fprintf("Final distances robot-landmark:\n")
+fprintf(fd, "Final distances robot-landmark:\n");
 for robot = 1:n_robots
     fprintf("\tRobot %d:\n", robot)
+    fprintf(fd, "\tRobot %d:\n", robot);
     distances_est = zeros(1, n_anchors);
     distances_gt = zeros(1, n_anchors);
     for lnd = 1:n_anchors
@@ -874,28 +985,42 @@ for robot = 1:n_robots
     end
     % Print results
     fprintf("\t\tGT:   ")
+    fprintf(fd, "\t\tGT:   ");
     for lnd = 1:n_anchors
-        fprintf("%.2f ", distances_gt(lnd))
+        fprintf("%.4f ", distances_gt(lnd))
+        fprintf(fd, "%.4f ", distances_gt(lnd));
     end
     fprintf("\n")
+    fprintf(fd, "\n");
     fprintf("\t\tEST:  ")
+    fprintf(fd, "\t\tEST:  ");
     for lnd = 1:n_anchors
-        fprintf("%.2f ", distances_est(lnd))
+        fprintf("%.4f ", distances_est(lnd))
+        fprintf(fd, "%.4f ", distances_est(lnd));
     end
     fprintf("\n")
+    fprintf(fd, "\n");
     fprintf("\t\t----------------------------------------------\n")
+    fprintf(fd, "\t\t----------------------------------------------\n");
     fprintf("\t\tDIFF: ")
+    fprintf(fd, "\t\tDIFF: ");
     for lnd = 1:n_anchors
-        fprintf("%.2f ", abs(distances_gt(lnd) - distances_est(lnd)))
+        fprintf("%.4f ", abs(distances_gt(lnd) - distances_est(lnd)))
+        fprintf(fd, "%.4f ", abs(distances_gt(lnd) - distances_est(lnd)));
     end
-    fprintf(" --> MEAN: %.2f ", mean(abs(distances_gt - distances_est)))
+    fprintf(" --> MEAN: %.4f ", mean(abs(distances_gt - distances_est)))
+    fprintf(fd, " --> MEAN: %.4f ", mean(abs(distances_gt - distances_est)));
     fprintf("\n")
+    fprintf(fd, "\n");
 end
 fprintf("\n")
+fprintf(fd, "\n");
 
 fprintf("Final distances landmark-landmark:\n")
+fprintf(fd, "Final distances landmark-landmark:\n");
 for robot = 1:n_robots
     fprintf("\tRobot %d:\n", robot)
+    fprintf(fd, "\tRobot %d:\n", robot);
     distances_est = [];
     distances_gt = [];
     for lnd1 = 1:n_anchors-1
@@ -913,23 +1038,36 @@ for robot = 1:n_robots
     end
     % Print results
     fprintf("\t\tGT:   ")
+    fprintf(fd, "\t\tGT:   ");
     for lnd = 1:length(distances_gt)
-        fprintf("%.2f ", distances_gt(lnd))
+        fprintf("%.4f ", distances_gt(lnd))
+        fprintf(fd, "%.4f ", distances_gt(lnd));
     end
     fprintf("\n")
+    fprintf(fd, "\n");
     fprintf("\t\tEST:  ")
+    fprintf(fd, "\t\tEST:  ");
     for lnd = 1:length(distances_est)
-        fprintf("%.2f ", distances_est(lnd))
+        fprintf("%.4f ", distances_est(lnd))
+        fprintf(fd, "%.4f ", distances_est(lnd));
     end
     fprintf("\n")
+    fprintf(fd, "\n");
     fprintf("\t\t-------------------------------------------------------------------------------------------------------------------------------------------------\n")
+    fprintf(fd, "\t\t-------------------------------------------------------------------------------------------------------------------------------------------------\n");
     fprintf("\t\tDIFF: ")
+    fprintf(fd, "\t\tDIFF: ");
     for lnd = 1:length(distances_est)
-        fprintf("%.2f ", abs(distances_gt(lnd) - distances_est(lnd)))
+        fprintf("%.4f ", abs(distances_gt(lnd) - distances_est(lnd)))
+        fprintf(fd, "%.4f ", abs(distances_gt(lnd) - distances_est(lnd)));
     end
     fprintf("\n\t\t      --> MEAN: %.4f ", mean(abs(distances_gt - distances_est)))
+    fprintf(fd, "\n\t\t      --> MEAN: %.4f ", mean(abs(distances_gt - distances_est)));
     fprintf("\n")
+    fprintf(fd, "\n");
 end
+
+fclose(fd);
 
 %% Save workspace
 % roslam_data = struct();

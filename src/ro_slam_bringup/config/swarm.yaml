@@ -15,8 +15,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16
@@ -37,8 +37,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16
@@ -59,8 +59,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16
@@ -81,8 +81,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16
@@ -103,8 +103,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16
@@ -125,8 +125,8 @@
       num_iterations_pre: 120, percent_min_inliers_post: 0.6, percent_min_inliers_pre: 0.4}
     sharing: {enable: false, min_step_to_start: 200}
     show_tags_var: false
-    sigma_range: 0.3
-    sigma_shared: 0.15
+    sigma_range: 0.18
+    sigma_shared: 0.35
     uwb_id_order: [44AE, '5723', '8192', 08B0, '5107', 139C, '9128', 4A21]
     wheel_radius: 0.033
     wheels_separation: 0.16

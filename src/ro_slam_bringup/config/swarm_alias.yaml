@@ -15,8 +15,8 @@ reset_min_tags_converged: &reset_min_tags_converged 3
 
 n_tags: &n_tags 8
 n_phi: &n_phi 16
-sigma_range: &sigma_range 0.2
-sigma_shared: &sigma_shared 0.15
+sigma_range: &sigma_range 0.18
+sigma_shared: &sigma_shared 0.35
 bias_range: &bias_range 0.12
 
 roma2D_num_iterations_pre: &roma2D_num_iterations_pre 120
