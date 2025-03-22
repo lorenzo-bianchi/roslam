@@ -3,6 +3,7 @@
 *.fig
 *.mat
 *.eps
+data/*
 figures/*
 gifs/*
 videos/*
