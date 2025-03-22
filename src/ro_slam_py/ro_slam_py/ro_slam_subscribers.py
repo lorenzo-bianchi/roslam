@@ -35,7 +35,7 @@ def uwb_array_clbk(self, msg: UwbArray):
 
     distances += self.bias_range
 
-    if self.corrupt_measurement_enable:
+    if self.corrupt_measurement_enable and self.fed_ekf.k <= 600:
         distances += np.random.normal(self.corrupt_measurement_bias, self.corrupt_measurement_sigma, distances.shape)
 
     tic = time.time()

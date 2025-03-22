@@ -2,6 +2,10 @@
 clc; close all
 bag_field_B2
 
+%% Plot style
+line_width = 1;
+marker_size = 12; 
+
 %% Params
 wheel_radius = 0.033;
 wheels_separation = 0.16;
@@ -39,7 +43,7 @@ clear temp
 
 %% Read bag and topics names
 test = 5;
-bag_name = ['20250314_test', num2str(test)];
+bag_name = ['20250320_test', num2str(test)];
 path_prefix = '/home/lorenzo/Github/University/turtlebot3-utv-fork/logs/';
 full_path = strcat(path_prefix, bag_name, '/', bag_name, '_0.db3');
 bag = ros2bagreader(full_path);
@@ -48,7 +52,7 @@ t_start = bag.StartTime;
 t_end = bag.EndTime;
 
 %% Get number of robots and topics names
-n_robots = -1;
+n_robots = length(tests_pre);
 topics_names = strings(0);
 for i = 1:length(all_topics)
     topic = all_topics(i);
@@ -57,15 +61,10 @@ for i = 1:length(all_topics)
     if isempty(id_str)
 
     else
-        id = str2double(id_str{1}{1});
-        if id > n_robots
-            n_robots = id;
-        end
-    
         topic_split = split(topic, '/');
          if length(topic_split) > 2
             topic_name = topic_split(3);
-    
+
             if ~any(topics_names == topic_name)
                 topics_names(end+1) = topic_name;
             end
@@ -130,82 +129,81 @@ if any(contains(topics_names, 'uwb_tag'))
 end
 clear uwb_msg
 
-% Plot anchors distances
-figure;
-set(gcf, 'Position', [100, 100, 1000, 1600]);
-
-T = tiledlayout(length(uwb_topics_names), 1, 'TileSpacing', 'Compact', 'Padding', 'Compact');
-
 colors = lines(8);
 
-t0 = 1;
-for i = 1:length(uwb_topics_names)
-    data = uwb_anchors_data{i};
-
-    times = data(:, 1);
-    distances = data(:, 2:end);
-    timesA = [];
-    timesB = [];
-    distancesA = [];
-    distancesB = [];
-
-    for j = 1:size(distances, 1)
-        if all(isnan(distances(j, 5:8)))
-            timesA = [timesA, times(j)];
-            distancesA = [distancesA; distances(j, 1:4)];
-        else
-            timesB = [timesB, times(j)];
-            distancesB = [distancesB; distances(j, 5:8)];
-        end
-    end
-
-    t = tiledlayout(T, 1, 2, 'TileSpacing', 'Compact', 'Padding', 'Compact');
-    t.Layout.Tile = i;
-    t.Title.String = sprintf('Robot %d', i);
-    t.Title.FontWeight = 'bold';
-    t.Title.FontSize = 12;
-
-    ax1 = nexttile(t,1);
-    for k = 1:size(distancesA, 2)
-        plot(timesA, distancesA(:,k), 'LineWidth', 1, 'Color', colors(k, :));
-        hold on;
-    end
-    grid on;
-    hold on;
-    for j = 1:size(distancesA, 2)
-        nan_indices = isnan(distancesA(:, j));
-        valid_indices = ~nan_indices;
-        distancesA(:, j) = interp1(timesA(valid_indices), distancesA(valid_indices, j), timesA, 'linear', 'extrap');
-        plot(timesA(nan_indices), distancesA(nan_indices, j), 'rx', 'MarkerSize', 12, 'LineWidth', 2);
-    end
-    xlim([t0 inf]);
-    ylim([0, 5]);
-    xlabel('time [s]');
-    ylabel('distance [m]');
-    legend('Anchor 1', 'Anchor 2', 'Anchor 3', 'Anchor 4', 'Location', 'northwest', 'NumColumns', 4);
-    set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
-
-    ax2 = nexttile(t,2);
-    for k = 1:size(distancesB, 2)
-        plot(timesB, distancesB(:,k), 'LineWidth', 1, 'Color', colors(k+4,:));
-        hold on;
-    end
-    grid on;
-    hold on;
-    for j = 1:size(distancesB, 2)
-        nan_indices = isnan(distancesB(:, j));
-        valid_indices = ~nan_indices;
-        distancesB(:, j) = interp1(timesB(valid_indices), distancesB(valid_indices, j), timesB, 'linear', 'extrap');
-        plot(timesB(nan_indices), distancesB(nan_indices, j), 'rx', 'MarkerSize', 12, 'LineWidth', 2);
-    end
-    xlim([t0 inf]);
-    ylim([0, 3.5]);
-    xlabel('time [s]');
-    ylabel('distance [m]');
-    legend('Anchor 5', 'Anchor 6', 'Anchor 7', 'Anchor 8', 'Location', 'northwest', 'NumColumns', 4);
-    set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
-end
-
+% Plot anchors distances
+% figure;
+% set(gcf, 'Position', [100, 100, 1000, 1600]);
+% 
+% T = tiledlayout(length(uwb_topics_names), 1, 'TileSpacing', 'Compact', 'Padding', 'Compact');
+% 
+% t0 = 1;
+% for i = 1:length(uwb_topics_names)
+%     data = uwb_anchors_data{i};
+% 
+%     times = data(:, 1);
+%     distances = data(:, 2:end);
+%     timesA = [];
+%     timesB = [];
+%     distancesA = [];
+%     distancesB = [];
+% 
+%     for j = 1:size(distances, 1)
+%         if all(isnan(distances(j, 5:8)))
+%             timesA = [timesA, times(j)];
+%             distancesA = [distancesA; distances(j, 1:4)];
+%         else
+%             timesB = [timesB, times(j)];
+%             distancesB = [distancesB; distances(j, 5:8)];
+%         end
+%     end
+% 
+%     t = tiledlayout(T, 1, 2, 'TileSpacing', 'Compact', 'Padding', 'Compact');
+%     t.Layout.Tile = i;
+%     t.Title.String = sprintf('Robot %d', i);
+%     t.Title.FontWeight = 'bold';
+%     t.Title.FontSize = 12;
+% 
+%     ax1 = nexttile(t,1);
+%     for k = 1:size(distancesA, 2)
+%         plot(timesA, distancesA(:,k), 'LineWidth', line_width, 'Color', colors(k, :));
+%         hold on;
+%     end
+%     grid on;
+%     hold on;
+%     for j = 1:size(distancesA, 2)
+%         nan_indices = isnan(distancesA(:, j));
+%         valid_indices = ~nan_indices;
+%         distancesA(:, j) = interp1(timesA(valid_indices), distancesA(valid_indices, j), timesA, 'linear', 'extrap');
+%         plot(timesA(nan_indices), distancesA(nan_indices, j), 'rx', 'MarkerSize', marker_size, 'LineWidth', line_width);
+%     end
+%     xlim([t0 inf]);
+%     ylim([0, 5]);
+%     xlabel('time [s]');
+%     ylabel('distance [m]');
+%     legend('Anchor 1', 'Anchor 2', 'Anchor 3', 'Anchor 4', 'Location', 'northwest', 'NumColumns', 4);
+%     set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
+% 
+%     ax2 = nexttile(t,2);
+%     for k = 1:size(distancesB, 2)
+%         plot(timesB, distancesB(:,k), 'LineWidth', line_width, 'Color', colors(k+4,:));
+%         hold on;
+%     end
+%     grid on;
+%     hold on;
+%     for j = 1:size(distancesB, 2)
+%         nan_indices = isnan(distancesB(:, j));
+%         valid_indices = ~nan_indices;
+%         distancesB(:, j) = interp1(timesB(valid_indices), distancesB(valid_indices, j), timesB, 'linear', 'extrap');
+%         plot(timesB(nan_indices), distancesB(nan_indices, j), 'rx', 'MarkerSize', marker_size, 'LineWidth', line_width);
+%     end
+%     xlim([t0 inf]);
+%     ylim([0, 3.5]);
+%     xlabel('time [s]');
+%     ylabel('distance [m]');
+%     legend('Anchor 5', 'Anchor 6', 'Anchor 7', 'Anchor 8', 'Location', 'northwest', 'NumColumns', 4);
+%     set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
+% end
 
 %% Joint states
 % if any(contains(topics_names, 'joint_states'))
@@ -251,7 +249,7 @@ end
 %     velocities = data(:, 2:end);
 % 
 %     nexttile;
-%     plot(times, velocities, 'LineWidth', 1);
+%     plot(times, velocities, 'LineWidth', line_width);
 %     grid on;
 %     hold on;
 % 
@@ -297,6 +295,27 @@ end
 %     end
 % end
 % 
+% % Plot odometry
+% figure;
+% set(gcf, 'Position', [100, 100, 1200, 800]);
+% 
+% for i = 1:length(odom_topics_names)
+%     data = odom_data_cell{i};
+% 
+%     positions = data(:, 2:3);
+% 
+%     nexttile;
+%     plot(positions(:, 1), positions(:, 2), 'LineWidth', line_width);
+%     grid on;
+%     hold on;
+% 
+%     title(['Robot ', num2str(i)]);
+%     xlabel('x [m]');
+%     ylabel('y [m]');
+%     set(gca, 'FontSize', 12, 'FontWeight', 'bold');
+%     axis equal
+% end
+
 % % Plot robot velocities
 % figure;
 % tiledlayout(length(odom_topics_names), 2, 'TileSpacing', 'Compact', 'Padding', 'Compact');
@@ -310,7 +329,7 @@ end
 %     velocities = data(:, end-1:end);
 % 
 %     nexttile;
-%     plot(times, velocities(:, 1), 'LineWidth', 1);
+%     plot(times, velocities(:, 1), 'LineWidth', line_width);
 %     grid on;
 %     hold on;
 %     xlim([t0 inf]);
@@ -321,7 +340,7 @@ end
 %     set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 % 
 %     nexttile;
-%     plot(times, velocities(:, 2), 'Color', '#D95319', 'LineWidth', 1);
+%     plot(times, velocities(:, 2), 'Color', '#D95319', 'LineWidth', line_width);
 %     grid on;
 %     hold on;
 %     xlim([t0 inf]);
@@ -347,8 +366,6 @@ for i = 1:n_robots
     y = data(:, 2);
     theta = unwrap(data(:, 3));
 
-
-
     t = tiledlayout(T, 1, 3, 'TileSpacing', 'Loose', 'Padding', 'Compact');
     t.Layout.Tile = i;
     t.Title.String = sprintf('Robot %d GT', i);
@@ -356,7 +373,7 @@ for i = 1:n_robots
     t.Title.FontSize = 12;
 
     ax1 = nexttile(t, 1);
-    plot(times, x, 'Color', 'r', 'LineWidth', 1);
+    plot(times, x, 'Color', 'r', 'LineWidth', line_width);
     grid on;
     hold on;
     xlim([t0 inf]);
@@ -365,7 +382,7 @@ for i = 1:n_robots
     set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax2 = nexttile(t, 2);
-    plot(times, y, 'Color', 'g', 'LineWidth', 1);
+    plot(times, y, 'Color', 'g', 'LineWidth', line_width);
     grid on;
     hold on;
     xlim([t0 inf]);
@@ -374,7 +391,7 @@ for i = 1:n_robots
     set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax3 = nexttile(t, 3);
-    plot(times, theta, 'Color', 'b', 'LineWidth', 1);
+    plot(times, theta, 'Color', 'b', 'LineWidth', line_width);
     grid on;
     hold on;
     xlim([t0 inf]);
@@ -382,6 +399,27 @@ for i = 1:n_robots
     ylabel('\theta [rad]');
     set(ax3, 'FontSize', 12, 'FontWeight', 'bold');
 end
+
+% for i = 1:n_robots
+%     figure;
+% 
+%     data_gt = squeeze(gt_data(i).robots_poses_world_history);
+%     xy = data_gt(:, 1:2);
+%     theta = unwrap(data_gt(:, 3));
+% 
+%     data_odom = odom_data_cell{i};
+%     positions = rototranslation(data_odom(:, 2:3), xy(1, 1:2), mean(theta(1:80)));
+% 
+%     title(['Robot ', num2str(i)]);
+%     plot(xy(:, 1), xy(:, 2), 'Color', 'b', 'LineWidth', line_width);
+%     grid on;
+%     hold on;
+%     plot(positions(:, 1), positions(:, 2), 'LineWidth', line_width);
+%     xlabel('x [m]');
+%     ylabel('y [m]');
+%     axis equal
+%     set(gca, 'FontSize', 12, 'FontWeight', 'bold');
+% end
 
 %% Estimated poses
 if any(contains(topics_names, 'estimated_pose'))
@@ -413,6 +451,23 @@ if any(contains(topics_names, 'estimated_pose'))
 end
 clear est_pose_msg
 
+resets_wrt_est = zeros(n_robots, 1);
+t_resets_wrt_est = zeros(n_robots, 1);
+% Check if some robots reset
+for robot = 1:n_robots
+    xy = est_pose_data_cell{robot}(:, 2:3);
+    times = est_pose_data_cell{robot}(:, 1);
+    for i = 300:size(xy, 1)
+        xy_prec = xy(i-1, :);
+        xy_curr = xy(i, :);
+        dist = norm(xy_curr - xy_prec);
+        if dist > 0.2
+            resets_wrt_est(robot) = i;
+            t_resets_wrt_est(robot) = times(i);
+        end
+    end
+end
+
 % Plot robots poses
 figure;
 set(gcf, 'Position', [100, 100, 1000, 1600]);
@@ -420,13 +475,19 @@ set(gcf, 'Position', [100, 100, 1000, 1600]);
 T = tiledlayout(length(est_pose_topics_names), 1, 'TileSpacing', 'Loose', 'Padding', 'Compact');
 
 t0 = 1;
+tf = 120;
 for i = 1:length(est_pose_topics_names)
     data = est_pose_data_cell{i};
 
     times = data(:, 1);
     x = data(:, 2);
     y = data(:, 3);
-    theta = unwrap(data(:, 4));
+
+    if resets_wrt_est(i) > 0
+        theta = [unwrap(data(1:resets_wrt_est(i)-1, 4)); unwrap(data(resets_wrt_est(i):end, 4))];
+    else
+        theta = unwrap(data(:, 4));
+    end
 
     t = tiledlayout(T, 1, 3, 'TileSpacing', 'Loose', 'Padding', 'Compact');
     t.Layout.Tile = i;
@@ -435,28 +496,28 @@ for i = 1:length(est_pose_topics_names)
     t.Title.FontSize = 12;
 
     ax1 = nexttile(t, 1);
-    plot(times, x, 'Color', 'r', 'LineWidth', 1);
+    plot(times, x, 'Color', 'r', 'LineWidth', line_width);
     grid on;
     hold on;
-    xlim([t0 inf]);
+    xlim([t0 tf]);
     xlabel('time [s]');
     ylabel('x [m]');
     set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax2 = nexttile(t, 2);
-    plot(times, y, 'Color', 'g', 'LineWidth', 1);
+    plot(times, y, 'Color', 'g', 'LineWidth', line_width);
     grid on;
     hold on;
-    xlim([t0 inf]);
+    xlim([t0 tf]);
     xlabel('time [s]');
     ylabel('y [m]');
     set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax3 = nexttile(t, 3);
-    plot(times, theta, 'Color', 'b', 'LineWidth', 1);
+    plot(times, theta, 'Color', 'b', 'LineWidth', line_width);
     grid on;
     hold on;
-    xlim([t0 inf]);
+    xlim([t0 tf]);
     xlabel('time [s]');
     ylabel('\theta [rad]');
     set(ax3, 'FontSize', 12, 'FontWeight', 'bold');
@@ -464,7 +525,6 @@ end
 
 %% Estimated landmarks
 if any(contains(topics_names, 'estimated_landmarks'))
-    est_lnds_topics_names = all_topics(contains(all_topics, 'estimated_landmarks'));
     est_lnds_topics_names = all_topics(contains(all_topics, 'estimated_landmarks'));
     est_lnds_data = cell(length(est_lnds_topics_names), 1);
     
@@ -500,11 +560,15 @@ clear est_lnds_msg
 %%
 initial_poses_gt = zeros(length(tests_pre), 3);
 ending_poses_gt = zeros(length(tests_pre), 3);
+initial_poses_gt_reset = zeros(length(tests_pre), 3);
 for i = 1:length(tests_pre)
     initial_poses_gt(i, :) = squeeze(gt_data(i).robots_poses_world_history(1, 1, :));
     ending_poses_gt(i, :) = squeeze(gt_data(i).robots_poses_world_history(end, 1, :));
+    if resets_wrt_est(i) > 0
+        initial_poses_gt_reset(i, :) = squeeze(gt_data(i).robots_poses_world_history(resets_wrt_est(i), 1, :));
+    end
 end
-% 
+
 % figure;
 % hold on;
 % grid on;
@@ -514,7 +578,7 @@ end
 %     xy = pts(key);
 % 
 %     num = key(2);
-%     plot(xy(1), xy(2), 'rh', 'Linewidth', 2, 'MarkerSize', 12);
+%     plot(xy(1), xy(2), 'rh', 'LineWidth', line_width, 'MarkerSize', marker_size);
 %     text(xy(1), xy(2)+0.1, num2str(num), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'red');
 % end
 % 
@@ -525,7 +589,7 @@ end
 %     L = 0.2;
 %     dx = L * cos(theta);
 %     dy = L * sin(theta);
-%     quiver(x, y, dx, dy, 'LineWidth', 1, 'MaxHeadSize', 1);
+%     quiver(x, y, dx, dy, 'LineWidth', line_width, 'MaxHeadSize', 1);
 % end
 % 
 % colors = lines(length(tests_pre));
@@ -542,7 +606,7 @@ end
 %     xy_w = rototranslation(xy, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
 %     xy_w = rototranslation(xy, ending_poses_gt(i, 1:2), ending_poses_gt(i, 3)-theta);
 % 
-%     plot(xy_w(:, 1), xy_w(:, 2), 'LineWidth', 1, 'LineStyle', '-', 'Color', colors(i, 1:end))
+%     plot(xy_w(:, 1), xy_w(:, 2), 'LineWidth', line_width, 'LineStyle', '-', 'Color', colors(i, 1:end))
 % end
 % 
 % for i = 1:length(tests_pre)
@@ -552,7 +616,7 @@ end
 %     xy_w = rototranslation(xy, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
 %     xy_w = rototranslation(xy, ending_poses_gt(i, 1:2), ending_poses_gt(i, 3)-theta);
 % 
-%     plot(xy_w(:, 1), xy_w(:, 2), 'kh', 'Linewidth', 2, 'MarkerSize', 12);
+%     plot(xy_w(:, 1), xy_w(:, 2), 'kh', 'LineWidth', line_width, 'MarkerSize', marker_size);
 % end
 % 
 % xlabel('x [m]')
@@ -567,7 +631,7 @@ end
 %     pose_robot = est_pose_data_cell{i}(:, 2:4);
 % 
 %     figure
-%     plot(pose_robot(:, 1), pose_robot(:, 2), 'LineWidth', 1, 'LineStyle', '-', 'Color', colors(i, 1:end))
+%     plot(pose_robot(:, 1), pose_robot(:, 2), 'LineWidth', line_width, 'LineStyle', '-', 'Color', colors(i, 1:end))
 %     hold on
 %     grid on
 %     axis equal
@@ -579,7 +643,7 @@ end
 %         L = 0.1;
 %         dx = L * cos(theta);
 %         dy = L * sin(theta);
-%         quiver(x, y, dx, dy, 'LineWidth', 1, 'MaxHeadSize', 1, 'Color', 'r');
+%         quiver(x, y, dx, dy, 'LineWidth', line_width, 'MaxHeadSize', 1, 'Color', 'r');
 %     end
 % 
 %     xlim([-1 2.7])
@@ -596,7 +660,7 @@ for i = 1:length(tests_pre)
     xy_robot_w = rototranslation(xy_robot, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
 
     figure
-    plot(xy_robot_w(:, 1), xy_robot_w(:, 2), 'LineWidth', 1, 'LineStyle', '-', 'Color', colors(i, 1:end))
+    plot(xy_robot_w(:, 1), xy_robot_w(:, 2), 'LineWidth', line_width, 'LineStyle', '-', 'Color', colors(i, 1:end))
     hold on
     grid on
     axis equal
@@ -604,21 +668,21 @@ for i = 1:length(tests_pre)
     xy_lnds = [est_lnds_data{i}.x(end, :)', est_lnds_data{i}.y(end, :)'];
     xy_lnds_w = rototranslation(xy_lnds, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
 
-    plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'Linewidth', 2, 'MarkerSize', 12);
+    plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'LineWidth', line_width, 'MarkerSize', marker_size);
 
-    plot(pos_anchors(:, 1), pos_anchors(:, 2), 'rh', 'Linewidth', 2, 'MarkerSize', 12);
+    plot(pos_anchors(:, 1), pos_anchors(:, 2), 'rh', 'LineWidth', line_width, 'MarkerSize', marker_size);
     for idx = 1:num_anchors
         text(pos_anchors(idx, 1), pos_anchors(idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'red');
     end
-    plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'Linewidth', 2, 'MarkerSize', 12);
+    plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'LineWidth', line_width, 'MarkerSize', marker_size);
     for idx = 1:num_anchors
         text(xy_lnds_w(idx, 1), xy_lnds_w(idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'black');
     end
 
     if length(tests_pre) == 1
-        plot(ending_poses_gt(1), ending_poses_gt(2), 'ro', 'Linewidth', 2, 'MarkerSize', 12);
+        plot(ending_poses_gt(1), ending_poses_gt(2), 'ro', 'LineWidth', line_width, 'MarkerSize', marker_size);
     else
-        plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ro', 'Linewidth', 2, 'MarkerSize', 12);
+        plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ro', 'LineWidth', line_width, 'MarkerSize', marker_size);
     end
 
     gt_poses = squeeze(gt_data(i).robots_poses_world_history(:, 1, :));
@@ -635,25 +699,25 @@ end
 %     xy_lnds_w = (R * xy_lnds' + t)';
 % 
 %     figure
-%     plot(pos_anchors(:, 1), pos_anchors(:, 2), 'rh', 'Linewidth', 2, 'MarkerSize', 12);
+%     plot(pos_anchors(:, 1), pos_anchors(:, 2), 'rh', 'LineWidth', line_width, 'MarkerSize', marker_size);
 %     hold on
 %     for idx = 1:num_anchors
 %         text(pos_anchors(idx, 1), pos_anchors(idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'red');
 %     end
-%     plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'Linewidth', 2, 'MarkerSize', 12);
+%     plot(xy_lnds_w(:, 1), xy_lnds_w(:, 2), 'kh', 'LineWidth', line_width, 'MarkerSize', marker_size);
 %     for idx = 1:num_anchors
 %         text(xy_lnds_w(idx, 1), xy_lnds_w(idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'black');
 %     end
 % 
 %     if length(tests_pre) == 1
-%         plot(ending_poses_gt(1), ending_poses_gt(2), 'ro', 'Linewidth', 2, 'MarkerSize', 12);
+%         plot(ending_poses_gt(1), ending_poses_gt(2), 'ro', 'LineWidth', line_width, 'MarkerSize', marker_size);
 %     else
-%         plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ro', 'Linewidth', 2, 'MarkerSize', 12);
+%         plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ro', 'LineWidth', line_width, 'MarkerSize', marker_size);
 %     end
 % 
 %     xy_robot = est_pose_data_cell{i}(end, 2:3);
 %     xy_robot_w = (R * xy_robot' + t)';
-%     plot(xy_robot_w(1), xy_robot_w(2), 'ko', 'Linewidth', 2, 'MarkerSize', 12);
+%     plot(xy_robot_w(1), xy_robot_w(2), 'ko', 'LineWidth', line_width, 'MarkerSize', marker_size);
 % 
 %     gt_poses = squeeze(gt_data(i).robots_poses_world_history(:, 1, :));
 %     plot(gt_poses(:, 1), gt_poses(:, 2), 'LineStyle', '--', 'Color', colors(i, 1:end))
@@ -661,7 +725,7 @@ end
 %     data = est_pose_data_cell{i};
 %     xy = data(:, 2:3);
 %     xy_w = (R * xy' + t)';
-%     plot(xy_w(:, 1), xy_w(:, 2), 'LineWidth', 1, 'LineStyle', '-', 'Color', colors(i, 1:end))
+%     plot(xy_w(:, 1), xy_w(:, 2), 'LineWidth', line_width, 'LineStyle', '-', 'Color', colors(i, 1:end))
 % 
 %     grid on
 %     axis equal
@@ -695,7 +759,7 @@ for i = 1:length(tests_pre)
     ending_poses_est(i, :) = xy_robot_w(end, :);
 
     figure
-    plot(pos_anchors(:, 1), pos_anchors(:, 2), 'kh', 'Linewidth', 2, 'MarkerSize', 12);
+    plot(pos_anchors(:, 1), pos_anchors(:, 2), 'kh', 'LineWidth', line_width, 'MarkerSize', marker_size);
     hold on
     grid on
     axis equal
@@ -705,21 +769,21 @@ for i = 1:length(tests_pre)
     for idx = 1:num_anchors
         text(pos_anchors(idx, 1), pos_anchors(idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'k');
     end
-    plot(xy_lnds_w(end, :, 1), xy_lnds_w(end, :, 2), 'h', 'Linewidth', 2, 'MarkerSize', 12, 'Color', colors(i, 1:end));
+    plot(xy_lnds_w(end, :, 1), xy_lnds_w(end, :, 2), 'h', 'LineWidth', line_width, 'MarkerSize', marker_size, 'Color', colors(i, 1:end));
     for idx = 1:num_anchors
         text(xy_lnds_w(end, idx, 1), xy_lnds_w(end, idx, 2)+0.05, num2str(idx), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14, 'FontWeight', 'bold', 'Color', colors(i, 1:end));
     end
 
     if length(tests_pre) == 1
-        plot(ending_poses_gt(1), ending_poses_gt(2), 'ko', 'Linewidth', 2, 'MarkerSize', 12);
-        plot(initial_poses_gt(1), initial_poses_gt(2), 'kx', 'Linewidth', 2, 'MarkerSize', 18);
+        plot(ending_poses_gt(1), ending_poses_gt(2), 'ko', 'LineWidth', line_width, 'MarkerSize', marker_size);
+        plot(initial_poses_gt(1), initial_poses_gt(2), 'kx', 'LineWidth', line_width, 'MarkerSize', 18);
     else
-        plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ko', 'Linewidth', 2, 'MarkerSize', 12);
-        plot(initial_poses_gt(i, 1), initial_poses_gt(i, 2), 'kx', 'Linewidth', 2, 'MarkerSize', 18);
+        plot(ending_poses_gt(i, 1), ending_poses_gt(i, 2), 'ko', 'LineWidth', line_width, 'MarkerSize', marker_size);
+        plot(initial_poses_gt(i, 1), initial_poses_gt(i, 2), 'kx', 'LineWidth', line_width, 'MarkerSize', 18);
     end
 
-    plot(xy_robot_w(end, 1), xy_robot_w(end, 2), 'ko', 'Linewidth', 2, 'MarkerSize', 12, 'Color', colors(i, 1:end));
-    plot(xy_robot_w(1, 1), xy_robot_w(1, 2), 'kx', 'Linewidth', 2, 'MarkerSize', 12, 'Color', colors(i, 1:end));
+    plot(xy_robot_w(end, 1), xy_robot_w(end, 2), 'ko', 'LineWidth', line_width, 'MarkerSize', marker_size, 'Color', colors(i, 1:end));
+    plot(xy_robot_w(1, 1), xy_robot_w(1, 2), 'kx', 'LineWidth', line_width, 'MarkerSize', marker_size, 'Color', colors(i, 1:end));
 
     xlim([-1 2.7])
     ylim([-0.5 4.3])
@@ -727,7 +791,7 @@ for i = 1:length(tests_pre)
     xlabel("x [m]")
     ylabel("y [m]")
     
-    plot(xy_robot_w(:, 1), xy_robot_w(:, 2), 'LineWidth', 1, 'LineStyle', '-', 'Color', colors(i, 1:end))
+    plot(xy_robot_w(:, 1), xy_robot_w(:, 2), 'LineWidth', line_width, 'LineStyle', '-', 'Color', colors(i, 1:end))
 end
 
 %% Ground truth + Estimated poses
@@ -741,7 +805,16 @@ gt_errors_angle = cell(n_robots, 1);
 times = cell(n_robots, 1);
 idx_convergence = zeros(n_robots, 1);
 
-tf = 120;
+if bag_name == "20250320_test5"
+deltas = [[    59.6-66,  88.7-94.9,  85.5-91.3];
+          [       -7.5,  89.7-97.2, 98.6-105.3];
+          [    49-55.7,  67.1-72.6,  82.3-87.1];
+          [  85.7-91.6,  76.4-82.6,  71.5-76.1];
+          [  67.5-73.2,  80.8-86.8,  102-107.3];
+          [102.8-109.3, 94.8-101.3,    3.2-8.5]];
+elseif bag_name == "20250320_test4"
+end
+
 for i = 1:n_robots
     data_gt = squeeze(gt_data(i).robots_poses_world_history);
 
@@ -753,6 +826,37 @@ for i = 1:n_robots
     x_gt = data_gt(:, 1);
     y_gt = data_gt(:, 2);
     theta_gt = unwrap(data_gt(:, 3));
+    
+
+    data_est = est_pose_data_cell{i};
+    times_est = data_est(:, 1);
+
+    t_start_gt_x = deltas(i, 1);
+    t_start_gt_y = deltas(i, 2);
+    t_start_gt_theta = deltas(i, 3);
+
+    idx_gt_start_x = find(times_gt > t_start_gt_x, 1);
+    idx_gt_start_y = find(times_gt > t_start_gt_y, 1);
+    idx_gt_start_theta = find(times_gt > t_start_gt_theta, 1);
+
+    x_gt = x_gt(idx_gt_start_x:end);
+    y_gt = y_gt(idx_gt_start_y:end);
+    theta_gt = theta_gt(idx_gt_start_theta:end);
+
+    times_gt_x = times_gt(idx_gt_start_x:end) - t_start_gt_x;
+    x_gt = interp1(times_gt_x, x_gt, times_est, 'linear');
+
+    times_gt_y = times_gt(idx_gt_start_y:end) - t_start_gt_y;
+    y_gt = interp1(times_gt_y, y_gt, times_est, 'linear');
+
+    times_gt_theta = times_gt(idx_gt_start_theta:end) - t_start_gt_theta;
+    theta_gt = interp1(times_gt_theta, theta_gt, times_est, 'linear');
+
+    % remove nans
+    times_gt = times_est;
+    x_gt(isnan(x_gt)) = x_gt(find(~isnan(x_gt), 1, 'first'));
+    y_gt(isnan(y_gt)) = y_gt(find(~isnan(y_gt), 1, 'first'));
+    theta_gt(isnan(theta_gt)) = theta_gt(find(~isnan(theta_gt), 1, 'first'));
 
     len_bag = size(est_pose_data_cell{i}, 1);
     xy_lnds_w = zeros(len_bag, 8, 2);
@@ -771,9 +875,21 @@ for i = 1:n_robots
             n_inl = 7;
         end
         [R, t, inl] = ransacRototranslation(xy_lnds, pos_anchors, 1000, 0.4-0.2*k/len_bag, 7);
+        if resets_wrt_est(i) > 0
+            if k < resets_wrt_est(i)
+                xy_0 = initial_poses_gt(i, 1:2);
+                theta_0 = initial_poses_gt(i, 3);
+            else
+                xy_0 = [x_gt(resets_wrt_est(i)), y_gt(resets_wrt_est(i))];
+                theta_0 = theta_gt(resets_wrt_est(i));
+            end
+        else
+            xy_0 = initial_poses_gt(i, 1:2);
+            theta_0 = initial_poses_gt(i, 3);
+        end
         if isempty(inl)
-            xy_robot_w(k, :) = rototranslation(xy_robot, initial_poses_gt(i, 1:2), initial_poses_gt(i, 3));
-            theta_robot_w(k, 1) = theta_robot + initial_poses_gt(i, 3);
+            xy_robot_w(k, :) = rototranslation(xy_robot, xy_0, theta_0);
+            theta_robot_w(k, 1) = theta_robot + theta_0;
         else
             if first_time
                 first_time = false;
@@ -784,42 +900,14 @@ for i = 1:n_robots
         end
     end
 
-    data_est = est_pose_data_cell{i};
-    times_est = data_est(:, 1);
     x_est = xy_robot_w(:, 1);
     y_est = xy_robot_w(:, 2);
-    theta_est = unwrap(theta_robot_w(:, 1)); % + theta_gt(1);
 
-    vx_est = diff(x_est) ./ diff(times_est);
-    vy_est = diff(y_est) ./ diff(times_est);
-    v_est = sqrt(vx_est.^2 + vy_est.^2)';
-    idx_est = find(v_est > 0.005, 1);
-    t_start_est = times_est(idx_est) - 4;
-    idx_est_start = find(times_est > t_start_est, 1);
-    x_est = x_est(idx_est_start:end);
-    y_est = y_est(idx_est_start:end);
-    theta_est = theta_est(idx_est_start:end);
-    times_est = times_est(idx_est_start:end) - t_start_est;
-
-    error_function = @(dx) norm(interp1(times_gt, x_gt, times_est + dx, 'linear', 'extrap') - x_est);
-    optimal_dx = fminsearch(error_function, 0);
-    % vx_gt = diff(x_gt) ./ diff(times_gt)';
-    % vy_gt = diff(y_gt) ./ diff(times_gt)';
-    % v_gt = sqrt(vx_gt.^2 + vy_gt.^2)';
-    % idx_gt = find(v_gt > 0.04, 1);
-    t_start_gt = optimal_dx;
-    idx_gt_start = find(times_gt > t_start_gt, 1);
-    x_gt = x_gt(idx_gt_start:end);
-    y_gt = y_gt(idx_gt_start:end);
-    theta_gt = theta_gt(idx_gt_start:end);
-    times_gt = times_gt(idx_gt_start:end) - t_start_gt;
-    x_gt = interp1(times_gt, x_gt, times_est, 'linear');
-    y_gt= interp1(times_gt, y_gt, times_est, 'linear');
-    theta_gt = interp1(times_gt, theta_gt, times_est, 'linear');
-    times_gt = times_est;
-    x_gt(isnan(x_gt)) = x_gt(find(~isnan(x_gt), 1, 'first'));
-    y_gt(isnan(y_gt)) = y_gt(find(~isnan(y_gt), 1, 'first'));
-    theta_gt(isnan(theta_gt)) = theta_gt(find(~isnan(theta_gt), 1, 'first'));
+    if resets_wrt_est(i) > 0
+        theta_est = [unwrap(theta_robot_w(1:resets_wrt_est(i)-1)); unwrap(theta_robot_w(resets_wrt_est(i):end))];
+    else
+        theta_est = unwrap(theta_robot_w(:, 1));
+    end
 
     t = tiledlayout(T, 1, 3, 'TileSpacing', 'Loose', 'Padding', 'Compact');
     t.Layout.Tile = i;
@@ -828,30 +916,42 @@ for i = 1:n_robots
     t.Title.FontSize = 12;
 
     ax1 = nexttile(t, 1);
-    plot(times_gt, x_gt, 'k--', 'LineWidth', 1);
+    plot(times_gt, x_gt, 'k--', 'LineWidth', line_width);
     grid on;
     hold on;
-    plot(times_est, x_est, 'r', 'LineWidth', 1);
+    plot(times_est, x_est, 'r', 'LineWidth', line_width);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', line_width);
+    if resets_wrt_est(i) > 0
+        xline(t_resets_wrt_est(i), 'k-.', 'LineWidth', line_width);
+    end
     xlim([1 tf]);
     xlabel('time [s]');
     ylabel('x [m]');
     set(ax1, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax2 = nexttile(t, 2);
-    plot(times_gt, y_gt, 'k--', 'LineWidth', 1);
+    plot(times_gt, y_gt, 'k--', 'LineWidth', line_width);
     grid on;
     hold on;
-    plot(times_est, y_est, 'g', 'LineWidth', 1);
+    plot(times_est, y_est, 'g', 'LineWidth', line_width);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', line_width);
+    if resets_wrt_est(i) > 0
+        xline(t_resets_wrt_est(i), 'k-.', 'LineWidth', line_width);
+    end
     xlim([1 tf]);
     xlabel('time [s]');
     ylabel('y [m]');
     set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
 
     ax3 = nexttile(t, 3);
-    plot(times_gt, theta_gt, 'k--', 'LineWidth', 1);
+    plot(times_gt, theta_gt, 'k--', 'LineWidth', line_width);
     grid on;
     hold on;
-    plot(times_est, theta_est, 'b', 'LineWidth', 1);
+    plot(times_est, theta_est, 'b', 'LineWidth', line_width);
+    if resets_wrt_est(i) > 0
+        xline(t_resets_wrt_est(i), 'k-.', 'LineWidth', line_width);
+    end
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', line_width);
     xlim([1 tf]);
     xlabel('time [s]');
     ylabel('\theta [rad]');
@@ -894,12 +994,15 @@ for i = 1:n_robots
 
     ax1 = nexttile(t, 1);
     err_pos = gt_errors_pos{i};
-    plot(times{i}, err_pos, 'r', 'LineWidth', 1);
+    plot(times{i}, err_pos, 'r', 'LineWidth', line_width);
     grid on;
     hold on;
-    plot(times_est, repmat(mean(err_pos), 1, size(times_est, 1)), 'k--', 'LineWidth', 1);
-    plot(times_est, repmat(mean(err_pos(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', 1);
-    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', 1);
+    plot(times_est, repmat(mean(err_pos), 1, size(times_est, 1)), 'k--', 'LineWidth', line_width);
+    plot(times_est, repmat(mean(err_pos(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', line_width);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', line_width);
+    if resets_wrt_est(i) > 0
+        xline(t_resets_wrt_est(i), 'k-.', 'LineWidth', line_width);
+    end
     xlim([1 tf]);
     xlabel('time [s]');
     ylabel('e_{xy} [m]');
@@ -907,12 +1010,15 @@ for i = 1:n_robots
 
     ax2 = nexttile(t, 2);
     err_angle = gt_errors_angle{i};
-    plot(times{i}, err_angle, 'b', 'LineWidth', 1);
+    plot(times{i}, err_angle, 'b', 'LineWidth', line_width);
     grid on;
     hold on;
-    plot(times_est, repmat(mean(err_angle), 1, size(times_est, 1)), 'k--', 'LineWidth', 1);
-    plot(times_est, repmat(mean(err_angle(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', 1);
-    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', 1);
+    plot(times_est, repmat(mean(err_angle), 1, size(times_est, 1)), 'k--', 'LineWidth', line_width);
+    plot(times_est, repmat(mean(err_angle(idx_convergence(i):end)), 1, size(times_est, 1)), 'k:', 'LineWidth', line_width);
+    xline(times_est(idx_convergence(i)), 'k', 'LineWidth', line_width);
+    if resets_wrt_est(i) > 0
+        xline(t_resets_wrt_est(i), 'k-.', 'LineWidth', line_width);
+    end
     xlim([1 tf]);
     xlabel('time [s]');
     ylabel('e_\theta [rad]');

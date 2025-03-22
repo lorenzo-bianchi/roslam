@@ -6,17 +6,17 @@ pruning_enable: &pruning_enable true
 pruning_dim_deque: &pruning_dim_deque 10
 pruning_min_step_to_start: &pruning_min_step_to_start 100
 
-sharing_enable: &sharing_enable false
+sharing_enable: &sharing_enable true
 sharing_min_step_to_start: &sharing_min_step_to_start 200
 
-reset_enable: &reset_enable false
-reset_min_steps: &reset_min_steps 100
+reset_enable: &reset_enable true
+reset_min_steps: &reset_min_steps 150
 reset_min_tags_converged: &reset_min_tags_converged 3
 
 n_tags: &n_tags 8
 n_phi: &n_phi 16
 sigma_range: &sigma_range 0.18
-sigma_shared: &sigma_shared 0.35
+sigma_shared: &sigma_shared 0.25
 bias_range: &bias_range 0.12
 
 roma2D_num_iterations_pre: &roma2D_num_iterations_pre 120
@@ -305,6 +305,6 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
     kl: *kl
 
     corrupt_measurement:
-      enable: *corrupt_measurement_enable  # True
-      sigma: *corrupt_measurement_sigma    # 0.5
-      bias: *corrupt_measurement_bias      # 0.5
+      enable: True
+      sigma: 0.4
+      bias: 0.15
