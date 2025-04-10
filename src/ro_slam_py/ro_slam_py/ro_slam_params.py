@@ -40,6 +40,7 @@ def init_parameters(self):
                     ('corrupt_measurement.enable', False),
                     ('corrupt_measurement.sigma', 0.0),
                     ('corrupt_measurement.bias', 0.0),
+                    ('corrupt_measurement.time_stop', 0),
                     ])
 
     # Get parameters
@@ -74,6 +75,7 @@ def init_parameters(self):
     self.corrupt_measurement_enable = self.get_parameter('corrupt_measurement.enable').value
     self.corrupt_measurement_sigma = self.get_parameter('corrupt_measurement.sigma').value
     self.corrupt_measurement_bias = self.get_parameter('corrupt_measurement.bias').value
+    self.corrupt_measurement_time_stop = self.get_parameter('corrupt_measurement.time_stop').value
 
     # Print parameters
     self.get_logger().info(f'frame_local: {self.frame_local}')
@@ -105,3 +107,4 @@ def init_parameters(self):
     self.get_logger().info(f'corrupt_measurement_enable: {self.corrupt_measurement_enable}')
     self.get_logger().info(f'corrupt_measurement_sigma: {self.corrupt_measurement_sigma}')
     self.get_logger().info(f'corrupt_measurement_bias: {self.corrupt_measurement_bias}')
+    self.get_logger().info(f'corrupt_measurement_time_stop: {self.corrupt_measurement_time_stop}')

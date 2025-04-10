@@ -10,14 +10,14 @@ sharing_enable: &sharing_enable true
 sharing_min_step_to_start: &sharing_min_step_to_start 200
 
 reset_enable: &reset_enable true
-reset_min_steps: &reset_min_steps 150
+reset_min_steps: &reset_min_steps 100
 reset_min_tags_converged: &reset_min_tags_converged 3
 
 n_tags: &n_tags 8
 n_phi: &n_phi 16
-sigma_range: &sigma_range 0.18
-sigma_shared: &sigma_shared 0.25
-bias_range: &bias_range 0.12
+sigma_range: &sigma_range 0.10
+sigma_shared: &sigma_shared 0.15
+bias_range: &bias_range 0.08
 
 roma2D_num_iterations_pre: &roma2D_num_iterations_pre 120
 roma2D_distance_threshold_pre: &roma2D_distance_threshold_pre 0.2
@@ -26,12 +26,13 @@ roma2D_num_iterations_post: &roma2D_num_iterations_post 120
 roma2D_distance_threshold_post: &roma2D_distance_threshold_post 0.1
 roma2D_percent_min_inliers_post: &roma2D_percent_min_inliers_post 0.6
 
-kr: &kr 0.001
-kl: &kl 0.001
+kr: &kr 0.0001
+kl: &kl 0.0001
 
 corrupt_measurement_enable: &corrupt_measurement_enable false
 corrupt_measurement_sigma: &corrupt_measurement_sigma 0.0
 corrupt_measurement_bias: &corrupt_measurement_bias 0.0
+corrupt_measurement_time_stop: &corrupt_measurement_time_stop 0
 
 /robot1/ro_slam_py:
   ros__parameters:
@@ -78,6 +79,7 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
       enable: *corrupt_measurement_enable
       sigma: *corrupt_measurement_sigma
       bias: *corrupt_measurement_bias
+      time_stop: *corrupt_measurement_time_stop
 
 /robot2/ro_slam_py:
   ros__parameters:
@@ -124,6 +126,7 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
       enable: *corrupt_measurement_enable
       sigma: *corrupt_measurement_sigma
       bias: *corrupt_measurement_bias
+      time_stop: *corrupt_measurement_time_stop
 
 /robot3/ro_slam_py:
   ros__parameters:
@@ -170,6 +173,7 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
       enable: *corrupt_measurement_enable
       sigma: *corrupt_measurement_sigma
       bias: *corrupt_measurement_bias
+      time_stop: *corrupt_measurement_time_stop
 
 /robot4/ro_slam_py:
   ros__parameters:
@@ -216,6 +220,7 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
       enable: *corrupt_measurement_enable
       sigma: *corrupt_measurement_sigma
       bias: *corrupt_measurement_bias
+      time_stop: *corrupt_measurement_time_stop
 
 /robot5/ro_slam_py:
   ros__parameters:
@@ -262,6 +267,7 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
       enable: *corrupt_measurement_enable
       sigma: *corrupt_measurement_sigma
       bias: *corrupt_measurement_bias
+      time_stop: *corrupt_measurement_time_stop
 
 /robot6/ro_slam_py:
   ros__parameters:
@@ -306,5 +312,6 @@ corrupt_measurement_bias: &corrupt_measurement_bias 0.0
 
     corrupt_measurement:
       enable: True
-      sigma: 0.4
+      sigma: 0.30
       bias: 0.15
+      time_stop: 1000

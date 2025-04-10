@@ -35,7 +35,7 @@ def uwb_array_clbk(self, msg: UwbArray):
 
     distances += self.bias_range
 
-    if self.corrupt_measurement_enable and self.fed_ekf.k <= 600:
+    if self.corrupt_measurement_enable and self.fed_ekf.k <= self.corrupt_measurement_time_stop:
         distances += np.random.normal(self.corrupt_measurement_bias, self.corrupt_measurement_sigma, distances.shape)
 
     tic = time.time()
@@ -91,14 +91,16 @@ def odometry_clbk(self, msg: JointState):
         right_idx = 1
         left_idx = 0
 
-    vel_wheel_right = msg.velocity[right_idx] * self.wheel_radius
-    vel_wheel_left = msg.velocity[left_idx] * self.wheel_radius
+    vel_wheel_right = msg.velocity[right_idx]
+    vel_wheel_left = msg.velocity[left_idx]
+    # vel_wheel_right = omega_wheel_right * self.wheel_radius
+    # vel_wheel_left  = omega_wheel_left * self.wheel_radius
 
     if abs(vel_wheel_left) < 1e-5 and abs(vel_wheel_right) < 1e-5:  # TODO: check this threshold
         return
 
     tic = time.time()
-    self.fed_ekf.prediction(vel_wheel_right, vel_wheel_left)
+    self.fed_ekf.prediction(vel_wheel_right * 0.05, vel_wheel_left * 0.05)
     # print(f"Prediction time: {time.time() - tic}")
 
     self.broadcast_pose()

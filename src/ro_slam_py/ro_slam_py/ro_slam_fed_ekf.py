@@ -126,22 +126,23 @@ class FedEkf:
         self.initial_x = np.zeros((self.n_tags, ), dtype=mtype)
         self.initial_y = np.zeros((self.n_tags, ), dtype=mtype)
 
-    def prediction(self, vel_wheel_right: float, vel_wheel_left: float):
+    def prediction(self, dist_wheel_right: float, dist_wheel_left: float):
         self.k += 1
 
-        vel_robot = (vel_wheel_right + vel_wheel_left) / 2.0
-        omega_robot = (vel_wheel_right - vel_wheel_left) / self.wheels_separation
+        dist_robot = (dist_wheel_right + dist_wheel_left) / 2.0
+        theta_robot = (dist_wheel_right - dist_wheel_left) / self.wheels_separation
 
         cosk, sink = np.cos(self.x_hat_slam[2]), np.sin(self.x_hat_slam[2])
         half_cosk, half_sink = 0.5 * cosk, 0.5 * sink
 
         # Update state
-        self.x_hat_slam[0] += vel_robot * cosk
-        self.x_hat_slam[1] += vel_robot * sink
-        self.x_hat_slam[2] += omega_robot
+        dt = 0.05
+        self.x_hat_slam[0] += dist_robot * cosk
+        self.x_hat_slam[1] += dist_robot * sink
+        self.x_hat_slam[2] += theta_robot
 
         # Update jacobian matrix F = df/dx
-        self.F[0:2, 2] = np.array([-vel_robot * sink, vel_robot * cosk], dtype=mtype)
+        self.F[0:2, 2] = np.array([-dist_robot * sink, dist_robot * cosk], dtype=mtype)
 
         # Update jacobian W = df/dw
         self.W[0, 0] = half_cosk
@@ -152,7 +153,7 @@ class FedEkf:
         self.W[2, 1] = -1.0 / self.wheels_separation
 
         # Odometric error covariance matrix
-        Q = np.diag([self.kr * np.abs(vel_wheel_right), self.kl * np.abs(vel_wheel_left)])
+        Q = np.diag([self.kr * np.abs(dist_wheel_right), self.kl * np.abs(dist_wheel_left)])
 
         # P computation
         self.P = multi_dot([self.F, self.P, self.F.T]) + multi_dot([self.W, Q, self.W.T])

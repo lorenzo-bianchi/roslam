@@ -2,7 +2,7 @@
 clear; close all; clc;
 
 %% Parameters
-test_case = 2;
+test_case = 1;
 
 if test_case == 1
     % B1
@@ -39,11 +39,12 @@ else
     % B2
     n_anchors = 7;
     n_robots = 1;
-    n_test = 5;         % 5 has problem
+    n_test = 6;         % 5 has problem
     test_name = ['B2_test', num2str(n_test)];       % B2:  B2_test1 / ... / B2_test11
     video_path = ['/media/lorenzo/52387916-e258-4af3-95a4-c8701e29a684/@home/lorenzo/Desktop/DJI/', test_name, '.MP4'];
-    min_times = [  4,   1,   4,   9,   3,   4,   4,  14,  3,   8,   3];
-    max_times = [119, 113, 111, 108, 123, 119, 111, 128, 95, 107, 118];
+                  %1   %2   %3   %4   %5   %6   %7   %8   %9  %10  %11
+    min_times = [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0];
+    max_times = [119, 113, 111, 108, 123, 119, 111, 128,  95, 107, 118];
 
     anchors_poses_real= [      0,      0
                           1.7903,      0
@@ -86,7 +87,7 @@ max_time = max_times(n_test);
 pause_time = 0.001;
 skip_n_frames = 10;
 use_debug = false;
-make_gif = true;
+make_gif = false;
 gif_filename = ['./gifs/', test_name, '.gif'];
 frame_idx = 1;
 
