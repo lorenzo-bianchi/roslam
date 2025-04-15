@@ -972,6 +972,7 @@ end
 
 %% WRT anchors
 ending_poses_est = zeros(n_robots, 2);
+xy_lnds_w_cell = cell(n_robots, 1);
 for i = 1:length(tests_pre)
     len_bag = length(est_lnds_data{i}.times);
     xy_lnds_w = zeros(len_bag, 8, 2);
@@ -1004,6 +1005,7 @@ for i = 1:length(tests_pre)
         end
     end
     ending_poses_est(i, :) = xy_robot_w(end, :);
+    xy_lnds_w_cell{i} = xy_lnds_w;
 
     figure
     set(gcf, 'Position', [100, 100, 1000, 1600]);
@@ -1341,6 +1343,108 @@ for i = 1:n_robots
         set(ax2, 'FontSize', 12, 'FontWeight', 'bold');
     end
 end
+
+%% Landmarks
+robot = 2;
+figure
+set(gcf, 'Position', [100, 100, 1000, 400]);
+
+x = est_lnds_data{robot}.x';
+y = est_lnds_data{robot}.y';
+len_time = size(x, 2);
+
+time = est_pose_data_cell{robot}(:, 1);
+colors = {'#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F', '#1010FF'};
+names = {'Anchor1', 'Anchor2', 'Anchor3', 'Anchor4', 'Anchor5', 'Anchor6', 'Anchor7', 'Anchor8'};
+
+tiledlayout(1, 2, 'TileSpacing', 'compact')
+for idx = 1:2
+    nexttile
+    for tag = 1:n_anchors
+        posLoc = [x(tag, :); y(tag, :)];
+        if resets_wrt_est(robot) > 0
+            % posGlob = zeros(3, nPassi);
+            % 
+            % tResetVect = [1, tResets{robot}, nPassi];
+            % for t_idx = 1:length(tResetVect)-1
+            %     t0 = tResetVect(t_idx);
+            %     t1 = tResetVect(t_idx+1);
+            % 
+            %     T = TsGL{robot}(:, :, t_idx);
+            %     posGlob(:, t0:t1) = T*posLoc(:, t0:t1);
+            % end
+        else
+            posGlob = rototranslation(posLoc', initial_poses_gt(robot, 1:2), initial_poses_gt(robot, 3));
+        end
+        if idx == 1
+            plot(time, posGlob(:, 1), 'LineWidth', 1, 'Color', colors{tag}, 'DisplayName', names{tag})
+            hold on
+            plot(time, pos_anchors(tag, 1)*ones(1, len_time), '--', 'LineWidth', line_width, 'Color', colors{tag}, 'DisplayName', '')
+        else
+            plot(time, posGlob(:, 2), 'LineWidth', 1, 'Color', colors{tag}, 'DisplayName', names{tag})
+            hold on
+            plot(time, pos_anchors(tag, 2)*ones(1, len_time), '--', 'LineWidth', line_width, 'Color', colors{tag}, 'DisplayName', '')
+        end
+    end
+    % if pruning
+    %     for i = 1:length(stepStartPruning{robot})
+    %         if stepStartPruning{robot}(i) > t_max
+    %             continue
+    %         end
+    %         if i == 1
+    %             xline(stepStartPruning{robot}(i), '--k', 'LineWidth', 1, 'DisplayName', 'Pruning');
+    %         else
+    %             xline(stepStartPruning{robot}(i), '--k', 'LineWidth', 1, 'HandleVisibility', 'off');
+    %         end
+    %     end
+    % end
+    % if sharing
+    %     first = 1;
+    %     for t = startSharing
+    %         if t ~= -1
+    %             if first
+    %                 first = 0;
+    %                 xline(t, '-.k', 'LineWidth', 1, 'DisplayName', 'Sharing');
+    %             else
+    %                 xline(t, '-.k', 'LineWidth', 1, 'HandleVisibility', 'off');
+    %             end
+    %         end
+    %     end
+    % end
+    % if ~isempty(tResets{robot})
+    %     for i = 1:length(tResets{robot})
+    %         if i == 1
+    %             xline(tResets{robot}(i), '--r', 'LineWidth', 1.5, 'DisplayName', 'Reset');
+    %         else
+    %             xline(tResets{robot}(i), '--r', 'LineWidth', 1.5, 'HandleVisibility', 'off');
+    %         end
+    %     end
+    % end
+    
+    grid on
+    xlabel('time [s]');
+    if idx == 1
+        ylabel('x [m]');
+    else
+        ylabel('y [m]');
+        legend('location', 'eastoutside');
+    end
+    yticks(-4:0.5:4);
+    xlim([t0 tf]);
+
+    ax = gca;
+    ax.FontSize = 12;
+end
+
+sgtitle(sprintf('Absolute errors robot %d', robot), 'FontSize', 16)
+
+set(gcf, 'Renderer', 'Painters');
+pause(0.2)
+set(gcf, 'Renderer', 'OpenGL');
+
+% if length(dbstack) == 1
+%     saveas(gcf, sprintf('./Article/robot%d.eps', robot), 'epsc');
+% end
 
 %% Print results
 fd = fopen(['data/errors_', bag_name, '.txt'], 'w');

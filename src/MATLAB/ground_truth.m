@@ -4,13 +4,23 @@ clear; close all; clc;
 %% Parameters
 test_case = 1;
 
+anchors_poses_real_all = [      0,      0
+                           1.7903,      0
+                           1.7241, 3.6934
+                          -0.1471, 3.7211
+                           2.0991, 1.8572
+                           0.7446, 3.1161
+                          -0.3386, 2.1962
+                           0.8853, 1.2402];
+
 if test_case == 1
     % B1
     n_anchors = 4;
     n_robots = 3;
     n_test = 7;
     test_name = ['test', num2str(n_test)];       % B1:  test1 no / test2 yes / test3 no / test4 yes / test5 yes / test7 yes / test8 yes
-    video_path = ['./videos/', test_name, '.MP4'];
+    % video_path = ['./videos/', test_name, '.MP4'];
+    video_path = ['/media/lorenzo/52387916-e258-4af3-95a4-c8701e29a684/@home/lorenzo/Desktop/DJI/', test_name, '.MP4'];
     min_times = [   0,  2,    0,    0,    0,    0,  7,    0];
     max_times = [1000, 86, 1000, 1000, 1000, 1000, 80, 1000];
 
@@ -54,14 +64,6 @@ else
                           0.7446, 3.1161
                          -0.3386, 2.1962
                           0.8853, 1.2402];
-    anchors_poses_real_all = [      0,      0
-                               1.7903,      0
-                               1.7241, 3.6934
-                              -0.1471, 3.7211
-                               2.0991, 1.8572
-                               0.7446, 3.1161
-                              -0.3386, 2.1962
-                               0.8853, 1.2402];
 
     robot_last_poses = [0.51, 0.34;
                         1.70, 0.75;
@@ -324,22 +326,11 @@ while hasFrame(video) && video.CurrentTime <= max_time
 end
 
 %% Save last frame and last trajectories
-% figure;
-% ax1 = axes('Position', [0, 0, 1, 1]); % Creazione di un axes che occupa tutta la figura
-% imshow(frame, 'Parent', ax1); % Mostra l'immagine nel primo axes
-%
-% hold on;
-% for robot = 1:n_robots
-%     trajectories = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
-%     plot(trajectories(1:10:end, 1), trajectories(1:10:end, 2), ...
-%         'Color', robot_colors(robot, :), 'LineStyle', '--');
-%     % set(gcf, 'Renderer', 'Painters');
-%     % pause(0.5)
-%     set(gcf, 'Renderer', 'OpenGL');
-% end
-%
-% drawnow;
-% pause(1);
+figure;
+ax1 = axes('Position', [0, 0, 1, 1]); % Creazione di un axes che occupa tutta la figura
+imshow(frame, 'Parent', ax1); % Mostra l'immagine nel primo axes
+
+hold on;
 
 if anchors_poses_frame(1, 1) > size(frame, 1) / 2
     K = [0 -1; -1 0];
@@ -349,8 +340,14 @@ end
 meters_to_pixels = @(p_pixels) (((p_pixels - c1) / s) * R' + c2) * K + anchors_poses_frame(1, :);
 last_trajectories = zeros(size(robots_poses_world_history, 1), n_robots, 2);
 for robot = 1:n_robots
-    last_trajectories(:, robot, :) = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
+    trajectories = meters_to_pixels(squeeze(robots_poses_world_history(:, robot, 1:2)));
+    plot(trajectories(1:10:end, 1), trajectories(1:10:end, 2), 'Color', robot_colors(robot, :), 'LineStyle', '--');
+    last_trajectories(:, robot, :) = trajectories;
 end
+
+% set(gcf, 'Renderer', 'Painters');
+% pause(0.5)
+set(gcf, 'Renderer', 'OpenGL');
 
 last_frame = frame;
 
