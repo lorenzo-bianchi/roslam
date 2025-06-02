@@ -49,7 +49,7 @@ else
     % B2
     n_anchors = 7;
     n_robots = 1;
-    n_test = 6;         % 5 has problem
+    n_test = 1;         % 5 has problem
     test_name = ['B2_test', num2str(n_test)];       % B2:  B2_test1 / ... / B2_test11
     video_path = ['/media/lorenzo/52387916-e258-4af3-95a4-c8701e29a684/@home/lorenzo/Desktop/DJI/', test_name, '.MP4'];
                   %1   %2   %3   %4   %5   %6   %7   %8   %9  %10  %11
@@ -65,17 +65,17 @@ else
                          -0.3386, 2.1962
                           0.8853, 1.2402];
 
-    robot_last_poses = [0.51, 0.34;
-                        1.70, 0.75;
-                        0.01, 0.85;
-                        1.60, 1.39;
-                        0.70, 2.16;
-                        0.09, 2.68;
-                        1.19, 1.84;
-                        0.51, 0.34;
-                        1.48, 1.22;
-                        0.39, 0.95;
-                        0.73, 2.23];
+    robot_last_poses = [0.4838, 0.4005;
+                        1.6954, 0.7496;
+                        0.0114, 0.8471;
+                        1.5953, 1.3881;
+                        0.6987, 2.1577;
+                        0.0873, 2.6786;
+                        1.1874, 1.8380;
+                        0.5087, 0.3397;
+                        1.4813, 1.2207;
+                        0.3879, 0.9546;
+                        0.7341, 2.2276];
 
 
     % robot_colors = lines(7);
@@ -208,26 +208,34 @@ while hasFrame(video) && video.CurrentTime <= max_time
     frame = readFrame(video);
     n_frame = n_frame + 1;
 
+    if n_frame == 2570
+        a = 1;
+    end
+
     %% Localizations
-    [anchors_poses_frame, anchors_rects] = anchor_localizer.localize(frame, anchors_rects);
+    [anchors_poses_frame, anchors_rects, use_anchor] = anchor_localizer.localize(frame, anchors_rects);
     [robots_poses_frame, robots_rects] = robot_localizer.localize(frame, robots_rects);
 
     alpha = atan2(anchors_poses_frame(2, 2) - anchors_poses_frame(1, 2),...
                   anchors_poses_frame(2, 1) - anchors_poses_frame(1, 1));
+
     T = [1.0, 0.0, anchors_poses_frame(1, 1);...
          0.0, 1.0, anchors_poses_frame(1, 2);...
          0.0, 0.0,                       1.0];
-    S = [1.0,  0.0, 0.0;...
-         0.0, -1.0, 0.0;...
-         0.0,  0.0, 1.0];
+
     R = [cos(alpha), -sin(alpha), 0.0;...
          sin(alpha),  cos(alpha), 0.0;...
                 0.0,         0.0, 1.0];
+
+    S = [1.0,  0.0, 0.0;...
+         0.0, -1.0, 0.0;...
+         0.0,  0.0, 1.0];
+
     M = (T * R * S)^-1;
     anchors_poses_world = M * [anchors_poses_frame, ones(n_anchors, 1)]';
     anchors_poses_world = anchors_poses_world(1:2, :)';
 
-    [s, R, c1, c2, rmse] = fit_polygon(anchors_poses_real, anchors_poses_world, false);
+    [s, R, c1, c2, rmse] = fit_polygon(anchors_poses_real, anchors_poses_world, use_anchor, false);
 
     robots_pos_world = M * [robots_poses_frame(:, 1:2), ones(n_robots, 1)]';
     robots_pos_world = robots_pos_world(1:2, :)';
@@ -596,3 +604,120 @@ set(gcf, 'Renderer', 'OpenGL');
 
 exportgraphics(gcf, ['./figures/', test_name, '.pdf'], 'ContentType', 'vector');
 savefig(gcf, ['./figures/', test_name, '.fig']);
+
+%% Plot RMSE
+font_size = 18;
+
+figure
+set(gcf, 'Position', [100, 100, 1000, 400]);
+
+steps = 1:size(rmse_history, 2);
+plot(steps, rmse_history, 'Color', "#80B3FF", 'LineWidth', 1);
+hold on
+
+rmse_mean = mean(rmse_history);
+rmse_max = max(rmse_history);
+rmse_min = min(rmse_history);
+
+yline(rmse_mean, 'r--', 'LineWidth', 4);
+yline(rmse_max, 'k--', 'LineWidth', 3);
+yline(rmse_min, 'k--', 'LineWidth', 3);
+
+grid on
+xlabel("frame number")
+ylabel("RMSE [m]")
+border = 100;
+xlim([-border, steps(end)+border])
+
+yticks = get(gca, 'YTick');
+new_yticks = unique([yticks, rmse_max, rmse_min]);
+set(gca, 'YTick', new_yticks);
+
+x_limits = get(gca, 'XLim');
+plot([x_limits(1), x_limits(1)+0.01*diff(x_limits)], [rmse_mean, rmse_mean], 'r', 'LineWidth', 2)
+
+text(x_limits(1) - 0.008*diff(x_limits), rmse_mean, sprintf('%.5f', rmse_mean), ...
+     'Color', 'r', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', ...
+     'FontWeight', 'bold', 'FontSize', font_size);
+
+set(gca, 'FontSize', font_size, 'FontWeight', 'bold');
+
+exportgraphics(gcf, ['./figures/', test_name, '_rmse.pdf'], 'ContentType', 'vector');
+savefig(gcf, ['./figures/', test_name, '_rmse.fig']);
+
+%%
+file_names = ["gt_B2_test1.mat", ...
+              ... "gt_B2_test2.mat", ...
+              "gt_B2_test3.mat", ...
+              "gt_B2_test4.mat", ...
+              "gt_B2_test6.mat", ...
+              "gt_B2_test7.mat", ...
+              ... "gt_B2_test8.mat", ...
+              "gt_B2_test9.mat", ...
+              ... "gt_B2_test10.mat", ...
+              ... "gt_B2_test11.mat"
+              ];
+
+robots_initial_poses = [0.5217, 0.3797;
+                        0.0605, 1.6437;
+                        1.3310, 2.7260;
+                        0.0905, 2.6885;
+                        1.2279, 1.8289;
+                        0.0905, 2.6885];
+
+figure
+set(gcf, 'Position', [100, 100, 1000, 400]);
+max_step = -1;
+rmse_vector = [];
+rmse_final_pos = [];
+starting_points = [];
+for name = file_names
+    load(['data/', char(name)]);
+    font_size = 16;
+    
+    steps = 1:size(rmse_history, 2);
+    plot(steps, rmse_history, 'LineWidth', 1);
+    hold on
+    
+    % rmse_mean = mean(rmse_history);
+    % rmse_max = max(rmse_history);
+    % rmse_min = min(rmse_history);
+    
+    % yline(rmse_mean, 'r--', 'LineWidth', 4);
+    % yline(rmse_max, 'k--', 'LineWidth', 3);
+    % yline(rmse_min, 'k--', 'LineWidth', 3);
+    
+    if steps(end) > max_step
+        max_step = steps(end);
+    end
+    
+    % yticks = get(gca, 'YTick');
+    % new_yticks = unique([yticks, rmse_max, rmse_min]);
+    % set(gca, 'YTick', new_yticks);
+    
+    % x_limits = get(gca, 'XLim');
+    % plot([x_limits(1), x_limits(1)+0.01*diff(x_limits)], [rmse_mean, rmse_mean], 'r', 'LineWidth', 2)
+    % 
+    % text(x_limits(1) - 0.008*diff(x_limits), rmse_mean, sprintf('%.5f', rmse_mean), ...
+    %      'Color', 'r', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', ...
+    %      'FontWeight', 'bold', 'FontSize', font_size);
+    
+    set(gca, 'FontSize', font_size, 'FontWeight', 'bold');
+
+    rmse_vector = [rmse_vector, rmse_history];
+    rmse_final_pos = [rmse_final_pos, rmse_real_pos];
+    starting_points = [starting_points; squeeze(robots_poses_world_history(1, 1, 1:2))'];
+
+    disp(squeeze(robots_poses_world_history(end, :, 1:2))')
+end
+
+yline(mean(rmse_vector), 'k--', 'LineWidth', 5)
+
+grid on
+xlabel("frame number")
+ylabel("RMSE [m]")
+border = 100;
+xlim([-border, max_step+border])
+
+exportgraphics(gcf, './figures/total_rmse.pdf', 'ContentType', 'vector');
+savefig(gcf, './figures/total_rmse.fig');

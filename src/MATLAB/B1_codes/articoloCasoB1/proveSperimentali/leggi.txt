@@ -1,0 +1,21 @@
+In questa cartella ci sono i dati di una delle prove sperimentali fatte da Lorenzo Bianchi a dic2024. I dati sono riferiti a 3 robot e 4 landmark e sono nel file roslam_data3.mat con relativa spiegazione in roslam_data3.txt.
+
+Gli script principali di questa cartella sono 
+- FedEKFnRobotConPruning.m 
+- FedEKFCasoB1conOptInConPruning.m. 
+Questi due script possono essere eseguiti direttamente in quanto caricano tutti i dati necessari. Il primo (preso dalla cartella [FedEKFnRobot]) serve per eseguire la simulazione del singolo robot (e bisogna scegliere quale robot considerare). Il secondo (preso dalla cartella [FedEKF3oPiuRobotCasoB1]) invece permette di simulare l'algoritmo cooperativo.
+Il 30gen2025 ho poi inserito la loro variante che prevede il calcolo corretto della varianza dell'innovazione, ottenendo:
+- FedEKFnRobotConPruningVarianzaGiusta.m 
+- FedEKFCasoB1conOptInConPruningVarianzaGiusta.m. 
+
+Altri script importanti sono quelli per testare i dati raccolti:
+- provaDati.m
+- provaDatiR1R2.m.
+Il primo script, dopo aver specificato quale robot considerare (alla riga 9) e quale landmark (alla riga 71), fa una verifica delle misure UWB robot-landmark.
+Il secondo invece, una volta specificata la coppia di robot (alle righe 10-11), fa una verifica delle misure UWB tra i due robot.
+
+Lo script FedEKFCasoB1conOptInConPruningSoloOdo.m era uno script preliminare in cui si leggeva solo l'odometria mentre le misure UWB erano generate sinteticamente.
+
+Tutti gli altri script dovrebbero essere funzioni richiamate da quelli principali descritti qui sopra.
+
+Ci sono poi dei file doc (sommarioRisultatiXxxx.doc) in cui sono riportati i risultati delle prove fatte con gli script FedEKFnRobotConPruning.m (singolo robot) e FedEKFCasoB1conOptInConPruning.m (3 robot insieme).

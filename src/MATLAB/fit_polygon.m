@@ -1,9 +1,18 @@
-function [scale_opt, R_opt, centroid1, centroid2, rmse] = fit_polygon(polygon_meters, polygon_pixels, use_debug)
+function [scale_opt, R_opt, centroid1, centroid2, rmse] = fit_polygon(polygon_meters, polygon_pixels, use_anchor, use_debug)
+    if all(use_anchor)
+        pm = polygon_meters;
+        pp = polygon_pixels;
+    else
+        polygon_meters(~use_anchor, :) = [0, 0];
+        polygon_pixels(~use_anchor, :) = [0, 0];
+        pm = polygon_meters;
+        pp = polygon_pixels;
+    end
     % Normalize and center
-    centroid1 = mean(polygon_meters, 1);
-    centroid2 = mean(polygon_pixels, 1);
-    poly1 = polygon_meters - centroid1;
-    poly2 = polygon_pixels - centroid2;
+    centroid1 = mean(pm, 1);
+    centroid2 = mean(pp, 1);
+    poly1 = pm - centroid1;
+    poly2 = pp - centroid2;
     
     % Compute optimal scaling factor
     scale_opt = sum(vecnorm(poly1, 2, 2)) / sum(vecnorm(poly2, 2, 2));
@@ -21,6 +30,8 @@ function [scale_opt, R_opt, centroid1, centroid2, rmse] = fit_polygon(polygon_me
     polygon_pixels_mapped = poly2_transformed + centroid1;
 
     rmse = sqrt(mean(vecnorm(poly2_transformed - poly1, 2, 2).^2));
+
+    
 
     if use_debug
         % Display results

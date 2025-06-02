@@ -52,6 +52,9 @@ for robot = 1:nRobot
 
     if pruning && sharing
         ids = global_poses(robot).ids;
+        if isempty(ids)
+            continue
+        end
         point1 = cTag(ids(1), :);
         point2 = cTag(ids(2), :);
 

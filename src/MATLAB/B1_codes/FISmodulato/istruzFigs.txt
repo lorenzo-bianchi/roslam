@@ -1,0 +1,21 @@
+FIGURA 1. Files: figScenario.fig e .eps. 
+Volendo generarne una nuova, andare nella cartella SLAM_2D ed eseguire: dati, percorsoRandom, disegnaFig.
+
+FIGURE 2 e 3. Files: rmsePruning.fig e .eps ed erroreTagPruning.fig e .eps.
+Volendo rigenerarla, andare nella cartella SLAM_2D/datiNuovi ed eseguire disegnaGraficiConfrontoSel2.m (disegnaGraficiConfronto.m e disegnaGraficiConfrontoSel.m sono due versioni precedenti). Cancellare quindi le curve di troppo (oppure commentarle nello script in modo che non vengano disegnate).
+Volendo invece rifare proprio le 1000 simulazioni, andare nella cartella SLAM_2D ed eseguire lo script faiConfrontoInizioPruningConRMSE.m che salva i vari file mat da utilizzare poi come sopra con disegnaGraficiConfrontoSel2.m.
+
+FIGURE 4 e 5. Files: rmseProposed.fig e .eps ed erroreTagProposed.fig e .eps.
+Si generano esattamente come le Figs. 2 e 3 eliminando anche qui le curve di troppo.
+
+FIGURE 6, 7, 8 e 9. Files: erroreKmisto.fig e .eps, erroreReInit.fig e .eps, landmark4.fig e .eps, CMO2010pruning200.fig e .eps rispettivamente. Tutte queste figure sono generate dallo script faiFigConfrontoTransitorio.m dentro SLAM_2D/datiNuovi. Alla fine dello script c'è anche descritta la procedura per generare un altro esempio simile.
+
+FIGURE 10, 11 e 12. Sono foto/disegni. Files: mdek1001.eps, rendering.eps e .png, setupTest.eps e jpg.
+
+FIGURA 13: l'ha fatta Lorenzo. Comunque posso farla anch'io facendo il plot(xVett,yVett) o anche di xGT e yGT (visto che all'inizio e alla fine il robot sta fermo), dopo aver caricato i dati dell'esperimento 1 e 2. Lo script faiFiguraGT.m dentro datiReali permette di rigenerare la figura.
+
+FIGURE 14 e 16. Files: misureR1L2.fig e .eps, misureR2L4.fig e .eps.
+Volendo rigenerarle, basta eseguire faiFigMisure.m dentro la cartella datiReali dopo aver eseguito confronta3casi.m in cui va impostato robotScelto = 1 per la fig. 13 e robotScelto = 2 per la fig. 15.
+
+FIGURE 15 e 17. Files: robot1.fig e .eps, robot2.fig e .eps.
+Volendo rigenerarle, basta eseguire confronta3casi.m, avendo impostato robotScelto = 1 per la fig. 14 e robotScelto = 2 per la fig. 16.

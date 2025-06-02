@@ -27,9 +27,10 @@ classdef AnchorLocalizer < handle
             obj.poses_frame = zeros(n_anchors, 2);
         end
 
-        function [poses_frame, rects] = localize(obj, frame, rects)
+        function [poses_frame, rects, use_anchor] = localize(obj, frame, rects)
             [height, width, ~] = size(frame);
             poses_frame = obj.poses_frame;
+            use_anchor = ones(1, obj.n_anchors);
 
             for anchor = 1:obj.n_anchors
                 [x1, y1, x2, y2] = obj.clamp_coordinates(int32(rects(anchor, :)), width, height);
@@ -41,6 +42,7 @@ classdef AnchorLocalizer < handle
                 if isempty(stats)
                     rects(anchor, :) = [poses_frame(anchor, 1:2) - 2 * obj.rect_size, ...
                                         poses_frame(anchor, 1:2) + 2 * obj.rect_size];
+                    use_anchor(anchor) = 0;
                     continue
                 end
 

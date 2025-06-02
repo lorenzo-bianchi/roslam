@@ -1,0 +1,54 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 1: figScenario.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare una figura simile occorre andare nella cartella \matlab\FedEKFnRobot ed eseguire: 
+>> dati % (con nRobot = 1)
+>> percorsoRandomNrobot % (con nPassi = 500)
+>> disegnaFig
+>> grid on
+>> xlabel('x [m]')
+>> ylabel('y [m]')
+Aggiustare poi i marker.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 2: erroriFinaliRobot.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura andare nella cartella \matlab\FedEKF3oPiuRobotCasoB1\confrontoPruning20ott2024 e aprire lo script faiFig.m scommentando: 
+load confrontoPruning200unRobot % singolo robot
+load confrontoPruning200cinqueRobotCon0p5 % 5 robot
+La figura è la *terza* generata dallo script. Nel caso a 5 robot si è usato dunque confrontoPruning200cinqueRobotCon0p5.mat, dove 0p5 è indice che la varianza delle misure di range tra i robot va dimezzata. Dal file leggi.txt, contenuto nella stessa cartella di faiFig.m, sembrerebbe che questi dati sono stati generati con l'ottimizzazione iniziale del grafo e con l'inizializzazione del terzo robot in alto a sinistra (cioè scommentando determinaIniziSinistra dentro percorsoRandomNrobotGuidato.m in \matlab\FedEKF3oPiuRobotCasoB1\). Infatti sono i file .mat del 21ott2024 e quello senzaOttimizzGrafo sempre del 21ott2024 dice esplicitamente che è senza ottimizzazione del grafo, mentre con l'inizializzazione del terzo robot al centro (prove fatte successivamente) pare che le cose non vadano meglio.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 3: erroriFinaliLandmark.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura seguire i passi della figura precedente: la presente figura è la *quarta* generata dallo script faiFig.m.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 4: confrontoStoriaRobot.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura seguire i passi della figura precedente: la presente figura è la *quinta* generata dallo script faiFig.m, ma bisogna commentare (se non lo sono già) i plot delle curve dotted che sono le deviazioni standard.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 5: confrontoStoriaLandmark.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura seguire i passi della figura precedente: la presente figura è la *sesta* generata dallo script faiFig.m, ma bisogna commentare (se non lo sono già) i plot delle curve dotted che sono le deviazioni standard.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 6: erroriFinaliRobot1SenzaOpt.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura (che comunque è stata salvata come confrontoRobot1di5Finale.fig anche in \confrontiConSenzaOttimizzGrafo), eseguire questa volta faiFigConfrontoOttimizzGrafo.m. E' la *prima* figura generata dallo script.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 7: confrontoStoriaRobot1SenzaOpt.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifare la figura (che comunque è stata salvata come confrontoStoriaRobot1di5.fig anche in \confrontiConSenzaOttimizzGrafo), eseguire come per la figura precedente faiFigConfrontoOttimizzGrafo.m. E' la *seconda* figura generata dallo script.
+
+N.B. Tutte queste figure possono essere ricreate con altre simulazioni eseguendo lo script faiStat.m dentro la cartella \matlab\FedEKF3oPiuRobotCasoB1\ e poi salvando i dati con lo script trasformaDati.m (presente dentro \confrontoPruning20ott2024), che permette di salvare i dati delle simulazioni nel formato utilizzato da faiFig.m. Questo genera nuovi dati del caso a più robot. La funzione faiStat.m in \FedEKFnRobot permette di generare anche nuovi dati per il caso a singolo robot.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figure 8-11: foto e simili sperimentali. Devo dire che la foto IMG20241216162344.jpg nella cartella \foto mi piaceva di più di quella in fig. 11: al limite la useremo per la revisione.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 12: odometryTrajectories.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifarla basta eseguire figuraRicOdometrica.m nella cartella \SLAM\articoloCasoB1\proveSperimentali.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figura 13: mappaAll.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifarla basta eseguire disegnaFiguronaFinaleAll.m nella cartella \SLAM\articoloCasoB1\proveSperimentali. N.B. Come scritto all'inizio dello script, bisogna però prima rieseguire FedEKFCasoB1conOptInConPruning.m.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+Figure 14-16: mappaRX.fig e .eps (il .fig sta dentro la cartella \sorgentiTex\figures).
+Per rifarle basta eseguire disegnaFiguronaFinaleSingle.m nella cartella \SLAM\articoloCasoB1\proveSperimentali. Come scritto all'inizio dello script, bisogna però prima rieseguire FedEKFnRobotConPruning.m, specificando ivi il robotScelto RX (RX=1,2,3).

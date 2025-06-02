@@ -21,7 +21,7 @@ class ROSlamNode(Node):
     # Import methods
     from .ro_slam_params import init_parameters
     from .ro_slam_subscribers import debug_clbk, uwb_array_clbk, odometry_clbk, landmark_array_clbk, landmark_array_test_clbk
-    from .ro_slam_utils import broadcast_pose, publish_pose_landmarks
+    from .ro_slam_utils import broadcast_pose, publish_pose_landmarks, publish_tags
 
 
     def __init__(self):

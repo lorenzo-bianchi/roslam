@@ -189,9 +189,13 @@ end
 xlabel('x [m]')
 ylabel('y [m]')
 axis equal;
-xlim([min(z_opt(:,1))-1, max(z_opt(:,1))+1]);
-ylim([min(z_opt(:,2))-1, max(z_opt(:,2))+1]);
-set(gca, 'FontSize', 12, 'FontWeight', 'bold');
+xlim([min(z_opt(:,1))-0.15, max(z_opt(:,1))+0.15]);
+ylim([min(z_opt(:,2))-0.25, max(z_opt(:,2))+0.25]);
+set(gca, 'FontSize', 16, 'FontWeight', 'bold');
+
+box on
+
+print(gcf, 'figures/test_field_B2.eps', '-depsc2', '-vector', '-r300', '-noui');
 
 %% GT B2
 starting_poses = [
@@ -209,7 +213,7 @@ starting_poses = [
 ];
 
 final_distances_anchors = zeros(size(starting_poses, 1), num_anchors);
-final_distances_anchors(1, :)  = [0.62 1.33 3.56 3.45 2.20 2.78 2.04 0.99];
+final_distances_anchors(1, :)  = [0.64 1.37 3.51 3.38 2.18 2.72 1.98 0.95];
 final_distances_anchors(2, :)  = [1.85 0.76 2.93 3.50 1.19 2.55 2.50 0.95];
 final_distances_anchors(3, :)  = [0.85 1.97 3.32 2.89 2.31 2.38 1.39 0.97];
 final_distances_anchors(4, :)  = [2.12 1.41 2.30 2.92 0.70 1.93 2.10 0.72];
@@ -258,13 +262,13 @@ for test = 1:num_tests
     angle0_char = starting_pose(3:end);
     pnt0 = pts(pnt0_char);
     angle0 = angles(angle0_char);
-    fprintf('\tStart: %s %s --> (%.2f, %.2f, %.2f)\n', pnt0_char, angle0_char, pnt0(1), pnt0(2), angle0);
+    fprintf('\tStart: %s %s --> (%.4f, %.4f, %.4f)\n', pnt0_char, angle0_char, pnt0(1), pnt0(2), angle0);
     fprintf('\t');
     for anchor = 1:num_anchors
         fprintf('dA%d = %.2f  ', anchor, final_distances_anchors(test, anchor));
     end
     fprintf('\n');
 
-    fprintf('\tEnd (GT): (%.2f, %.2f)\n', final_positions_robots(test, 1), final_positions_robots(test, 2));
+    fprintf('\tEnd (GT): (%.4f, %.4f)\n', final_positions_robots(test, 1), final_positions_robots(test, 2));
     fprintf('\n');
 end

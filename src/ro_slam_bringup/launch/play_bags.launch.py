@@ -21,12 +21,12 @@ topics = [
 ]
 
 bags = [
-    {"path": "logs/20241220_test1",        "robot_from": 1, "robot_to": 1, "initial_pose": (2.0, 2.0, 0.0)},
-    {"path": "logs/20241220_robot2_test4", "robot_from": 2, "robot_to": 2, "initial_pose": (1.0, 0.5, 0.4)},
-    {"path": "logs/20241220_robot3_test7", "robot_from": 3, "robot_to": 3, "initial_pose": (-0.5, -1.0, -0.6)},
-    {"path": "logs/20241220_robot3_test9", "robot_from": 3, "robot_to": 4, "initial_pose": (-0.5, -1.0, -0.6)},
-    {"path": "logs/20241220_test3",        "robot_from": 1, "robot_to": 5, "initial_pose": (-0.5, -1.0, -0.6)},
-    {"path": "logs/20241220_robot2_test6", "robot_from": 2, "robot_to": 6, "initial_pose": (-0.5, -1.0, -0.6)},
+    {"path": "logs/20241220_test1",        "robot_from": 1, "robot_to": 1, "initial_pose": (0.5217, 0.3787, 3.1416)},
+    {"path": "logs/20241220_robot2_test4", "robot_from": 2, "robot_to": 2, "initial_pose": (1.3310, 2.7260, -1.5708)},
+    {"path": "logs/20241220_robot3_test7", "robot_from": 3, "robot_to": 3, "initial_pose": (1.2279, 1.8289, 1.5708)},
+    {"path": "logs/20241220_robot3_test9", "robot_from": 3, "robot_to": 4, "initial_pose": (0.0905, 2.6885, 1.5708)},
+    {"path": "logs/20241220_test3",        "robot_from": 1, "robot_to": 5, "initial_pose": (0.0605, 1.6437, 0.0)},
+    {"path": "logs/20241220_robot2_test6", "robot_from": 2, "robot_to": 6, "initial_pose": (0.0905, 2.6885, -1.5708)},
 ]
 
 def generate_launch_description():

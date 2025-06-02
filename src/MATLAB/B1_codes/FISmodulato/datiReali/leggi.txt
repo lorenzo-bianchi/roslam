@@ -1,0 +1,58 @@
+Test fatto con dati sperimentali raccolti da Lorenzo Bianchi a dicembre 2024 (sono gli stessi usati nell'articolo dello SLAM cooperativo).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+FILE MAT
+
+1) roslam_data3.mat è il file con tutte le misure, in particolare quelle odometriche e quelle UWB, già usato nell'articolo precedente.
+2) gt_test7.mat, è il file con il ground truth della posa del robot. Purtroppo i tempi di questo GT non sono sincronizzati con quelli delle misure UWB del file precedente e ho dovuto fare una traslazione temporale (vedi script analisi dati qui sotto).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SCRIPT ANALISI DATI
+
+Ce ne sono vari: permettono di vedere come sono fatte le misure.
+a) provaDatiConGTrobot.m, si sceglie il robot (da 1 a 3) e il landmark (da 1 a 4) e questo script fa due plot: uno è il percorso del robot sul piano xy ricostruito dalle letture encoder (odo ruote), dall'odometria del TurtleBot (odo robot, che forse usa la IMU) e quello fornito dal GT ricavato dalle immagini, l'altro è il grafico delle misure UWB attese in base al GT e quelle raccolte tra il robot e il landmark selezionati. Nello script sono presenti vari calcoli utilizzati quando ancora non avevo il GT (quindi nell'articolo precedente per esempio), come la ricostruzione odometrica basata su encoder e su IMU nonché il calcolo trovaPosTag della posizione vera finale del robot in base alle misure di distanza dai landmark misurate a mano (vedi righe 108-113).
+b) analizzaUWB.m, si sceglie quali misure considerare: vengono messe tutte nello stesso vettore, cioè se faccio alla riga 13 for robot = 1:3 e poi, alla riga 34, for landmark = 1:4, tutte le misure vere ed attese vengono impilate in uno stesso vettore rispettivamente misureRobotLandmark misureAtteseRobotLandmark, per poi fare un'analisi degli errori. Se si vogliono vedere solo le misure tra un robot e un landmark, basta limitare i due cicli for a quel singolo robot e a quel singolo landmark. L'analisi degli errori consiste in questo: innanzitutto si fa un grafico di tutte le misure vere e attese nell'ordine con cui sono state impilate (fig. 1); poi si costruisce un vettore degli errori di misura e lo si ordina dalla misura attesa più piccola a quella più grande. Questo era stato fatto per vedere se c'era un bias variabile a seconda della distanza misurata e un pochino ciò accade, come si vede nella fig. 3 (ma anche nella 1, tutto sommato). Per vedere meglio il bias, sempre nella fig. 3 si riporta un errore filtrato, cioè in ogni punto ho la media degli errori in una finestra di ampeizza 2w. nella fig. 2 invece si fa un istogramma degli errori per vedere se è a media nulla e se è circa una gaussiana (il programma calcola anche la media e la deviazione standard degli errori che dà in output).
+N.B. Per allineare le misure ho proceduto nel seguente modo. Con riferimento allo script provaDatiConGTrobot.m già descritto sopra, i tempi delle varie misure sono salvati in: - tempi (quelli delle misure odometriche);
+- tempiGT (quelli del GT);
+- tempiMisure (quelli delle misure UWB).
+Ora, tempi e tempiMisure sono sincronizzati, essendo le misure odometriche e UWB  state raccolte insieme dal robot, anche se tempi ha un elemento ogni 0.05s (frequenza letture encoder 20Hz) mentre tempiMisure ogni 0.1s (ferquenza UWB 10Hz). Invece tempiGT non è sincronizzato con tempi e tempiMisure. Per trovare la traslazione e sincronizzarli basta fare il plot(tempi,uRe,'.-') e, in un'altra figura, il plot(tempiGT,xGT) o plot(tempiGT,xGT): se i tempi sono sincronizzati, i grafici lasciano il valore costante nello stesso momento. Il valore circa 11 aggiunto alle righe 59, 64 e 69, pare sia una buona scelta.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SCRIPT dei VARI METODI
+
+I vari metodi con diverse varianti sono stati implementati nei seguenti script. In generale sono tutti script autocontenuti, nel senso che a differenza delle simulazioni non richiedono di eseguire altri script prima (tipo dati e percorsoRandom). Gli script 
+- confrontaCasi.m
+- confronta3casi.m
+permettono di fare un confronto tra i vari metodi dopo aver scelto il robot da considerare. Il primo confronta solo due algoritmi, l'altro tutti e tre gli algoritmi. Fare attenzione che le varie quantità siano state impostate correttamente (tipo passoInizioPruning, sigmaDistanza, bias, kSwitch, ecc.). Nello script confronta3casi.m, che è poi quello utilizzato per generare i dati sperimentali dell'articolo, ho anche introdotto una traslazione IE per considerare solo una parte dei dati sperimentali e far partire l'esperimento da un certo punto (per esempio eliminando la parte in cui il robot sta fermo).
+
+1. ALGORITMO DI BASE:
+a) FedEKFnRobotConPruning.m dovrebbe essere quello dell'articolo precedente, ancora con nRobot.
+b) FedEKFnRobotConPruning.m come il precedente ma con la possibilità di ritardare l'avvio con IE.
+c) FedEKFconPruningSperimentale.m dovrebbe essere la versione senza n robot dello script in (a).
+d) FedEKFconPruningSperimentaleDopoAvvio.m permette il ritardo di avvio con IE.
+e) FedEKFconPruningSperimentaleDopoAvvioGT.m utilizza il GT per calcolare xVett e yVett e quindi gli errori e il valore iniziale della stima. Questa è la versione usata nell'articolo.
+f) FedEKFconPruningSperimentaleDopoAvvioGTbias.m è come il precedente salvo l'introduzione di un bias diverso a seconda della distanza misurata (righe 81-91).
+
+2. ALGORITMO MODULATO (o Kmisto):
+a) FedEKFconPruningConKnonMistoSper.m in realtà applica l'IS anche per correggere le ipotesi del robot e quindi (come accadeva nelle simulazioni), se non fosse sequenziale, sarebbe come il FedEKF normale.
+b) FedEKFconPruningConKmistoSenzaDoppioniSper.m è la versione di base del metodo.
+c) FedEKFconPruningConKmistoSenzaDoppioniSperDopoAvvio.m contiene la possibilità di ritardare l'avvio con IE.
+d) FedEKFconPruningConKmistoSenzaDoppioniSperDopoAvvioSwitch.m contiene la possibilità di interrompere la modulazione dopo un certo passo kSwitch, dopo il quale anche le ipotesi dei vari landmark si correggono con l'IS come nell'algoritmo di base. Tutti questi metodi sono stati tralasciati in favore del metodo combinato che segue, per cui per esempio manca la versione GT.
+e) insiemeSper.m mette insieme i due ingredienti: filtro modulato + reinizializzazione.
+f) insiemeSperGT.m introduce il ground truth per il calcolo di xVett e yVett per gli errori e per inizializzare la stima. Questo è quello usato nell'articolo. Il switch non ha effetto se il kSwitch viene impostato maggiore della durata della simulazione (cioè se kSwitch>nPassi).
+g) insiemeSperGTbias.m introduce il bias variabile a seconda della distanza misurata.
+
+3. ALGORITMO REINIT:
+a) CampanaroReInitSperimentaleDopoAvvio.m è la versione di partenza già con il ritardo nell'avvio con IE.
+b) CampanaroReInit2SperimentaleDopoAvvioAzzerando.m rispetto al precedente calcola la media della storia dell'innovazione per reinizializzare un landmark solo dopo un certo numero di passi dall'inizio e da quando si è avuta l'ultima reinizializzazione di quel landmark.
+c) CampanaroReInit2SperimentaleDopoAvvioAzzerandoGT.m usa anche qui il GT per calcolare xVett e yVett usati per il calcolo degli errori e per inizializzare la stima.  Questa è la versione usata nell'articolo.
+d) CampanaroReInit2SperimentaleDopoAvvioAzzerandoGTbias.m anche qui alle righe 83-93 si è introdotta una compensazione del bias in base alla distanza misurata.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ALTRI SCRIPT
+
+a) disegnaFigSper.m è lo script disegnaFig.m del caso sperimentale.
+b) faiFiguraMisure.m serve per le figure dell'articolo.
+c) filtraMisureTutteUnRobot.m filtra le misure facendo una media su una certa finestra di quelle grezze e quindi riducendo i picchi ecc. ma non è stata usata nell'articolo (i vari script sono stati eseguiti con filtraMISURE = 0).
+d) funGen.m e trovaPosTag.m invece servono per trovare coi minimi quadrati un punto note le distanze da certi punti noti. Serviva per lo SLAM cooperativo. Qui non dovrebbe servire più se non nell'analisi delle misure per trovare la posizione finale vera del robot quando non avevo il GT.
+d) 

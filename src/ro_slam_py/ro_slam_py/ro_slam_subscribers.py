@@ -67,6 +67,7 @@ def uwb_array_clbk(self, msg: UwbArray):
                 landmark.cov_xy = float(tag['cov_xy'])
                 landmark_array_msg.landmarks.append(landmark)
             self.landmark_pub.publish(landmark_array_msg)
+    self.publish_tags()
 
     self.broadcast_pose()
 

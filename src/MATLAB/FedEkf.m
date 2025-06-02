@@ -89,7 +89,7 @@ classdef FedEkf < handle
                 obj.xHatSLAM(6+jndPhi:nPhiMax+3:end,1) = data.possibiliPhi(jndPhi);
             end
             for indTag = 1:nTag    
-                obj.P(4+(3+nPhiMax)*(indTag-1):3+(3+nPhiMax)*indTag,4+(3+nPhiMax)*(indTag-1):3+(3+nPhiMax)*indTag) = obj.Ptag;
+                obj.P(4+(3+nPhiMax)*(indTag-1):3+(3+nPhiMax)*indTag, 4+(3+nPhiMax)*(indTag-1):3+(3+nPhiMax)*indTag) = obj.Ptag;
             end
 
             obj.xHatTagStoria = zeros(nTag, nPassi);
@@ -190,12 +190,12 @@ classdef FedEkf < handle
                     yTag_ij = y_i + rho_i*sinPhi_ij;
                     misuraRange_ij = sqrt((xTag_ij-x_r)^2+(yTag_ij-y_r)^2);
                     deltaMisura_ij = misureRange(indTag) - misuraRange_ij;
-                    
+
                     obj.innovazione(indMat+indPhi) = deltaMisura_ij;
                     probMisura_ij(indPhi) = exp(-deltaMisura_ij^2/(2*var_));
                     probMisura_ij(indPhi) = max(probMisura_ij(indPhi), 1e-100);
                     obj.pesi(indTag,indPhi) = obj.pesi(indTag,indPhi)*probMisura_ij(indPhi);
-    
+
                     obj.H(indMat+indPhi, 1:2) = [x_r-xTag_ij, y_r-yTag_ij];
                     obj.H(indMat+indPhi, 0+ind0) = xTag_ij-x_r;
                     obj.H(indMat+indPhi, 1+ind0) = yTag_ij-y_r;
@@ -578,7 +578,7 @@ classdef FedEkf < handle
             den = sum(inliersGood, 3);
             den(den == 0) = 1;
             W_ = inliersGood ./ den;
-            measures_weighted  = sum(W_ .* posTagRobot, 3);
+            measures_weighted = sum(W_ .* posTagRobot, 3);
 
             tags_to_use = sum(W_(1, :, :), 3);
             if all(tags_to_use == 0)

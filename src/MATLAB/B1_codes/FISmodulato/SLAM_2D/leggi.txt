@@ -1,0 +1,33 @@
+In questa cartella c'è il problema dello SLAM studiato in [CMO2010] e considerato nell'articolo sottomesso. Segue la descrizione degli script principali.
+
+1. SCRIPT del metodo base FedEKF:
+a) FedEKFvarianzaGiusta.m è il FedEKF normale dove la varianza per calcolare le likelihood è corretta, ma simulativamente si comporta peggio...
+b) FedEKF.m è il FedEKF normale con varianza approssimata e si comporta meglio! 
+c) FedEKFconPruning.m è la versione del FedEKF col pruning.
+d) FedEKFsequenziale.m è il FedEKF dove le correzioni vengono fatte una alla volta, prima la posa del robot e poi le ipotesi dei vari landmark, un landmark alla volta. Nel sequenziale3step invece si fa prima il robot, poi le variabili comuni dei landmark e poi le diverse ipotesi dei landmark. 
+ALLA FINE la versione utilizzata è la ***FedEKFconPruning.m*** (o FedEKF.m se non si vuole fare il pruning).
+
+2. FedEKF con REINIZIALIZZAZIONE quando la stima di qualche landmark va male:
+a) Campanaro.m è una prima versione in cui si determina solo se quella particolare simulazione è un outlier (vedi in particolare lo script cercaOutlier.m), nel qual caso la simulazione si blocca. Praticamente, per ogni landmark si determina l'innovazione associata all'ipotesi con innovazione minima e questa viene presa come innovazione del landmark. Si va poi a determinare quale landmark ha innovazione massima e si mette in un vettore storiaInnovazione. Se la media degli ultimi passi di questo vettore eccede una soglia, si ferma la simulazione. Questo era stato scritto con l'idea di implementare il metodo della tesi di Campanaro, poi abbandonata (il tentativo era stato fatto con CampanaroMaster.m).
+b) CampanaroreInit.m è il primo script in cui si reinizializzano i landmark. Se la storia delle innovazioni di un certo landmark supera una soglia si reinizializza la stima di quel landmark.
+c) CampanaroreInit2.m, come scritto all'inizio dello script, quando si reinizializza un landmark, si assegna una matrice di covarianza più corretta rispetto a quella dello script precedente, in cui l'incertezza sulle coordinate (xi,yi) del landmark è posta uguale a quella delle coordinate (x,y) del robot (e non a zero come all'inizio).
+d) CampanaroreInit3.m vuole strafare, cercando di migliorare ulteriormente l'inizializzazione della matrice di covarianza quando si reinizializza un landmark, mettendo una correlazione tra le coordinate (x,y) del robot e le (xi,yi) del landmark, ma non gli ha fatto bene, per cui la versione migliore, che poi ho arricchito, è la 2.
+e) CampanaroreInit2azzerando.m infine è la versione 2 dotata di un controllo che dopo una reinizializzazione di un landmark sospende il calcolo della media dell'innovazione di quel landmark per un numero di passi pari alla durata della finestra in cui tale media viene calcolata.
+ALLA FINE la versione utilizzata è ***CampanaroreInit2azzerando.m ***.
+
+3. IL FILTRO MODULATO (o con K misto). Anche qui ce ne sono diverse versioni:
+a) FedEKFconKmisto.m è la versione iniziale in cui la correzione del FedEKF usa l'IS per il robot e le coordinate comuni dei landmark e tutta l'informazione per le ipotesi dei landmark. 
+b) FedEKFconPruningConKmisto.m come il precedente ma con il pruning.
+c) FedEKFconPruningConKnonMisto.m usa l'IS anche per le ipotesi dei landmark.
+d) FedEKFconKmisto3step.m è il FedEKFconKmisto implementato a 3 step come il FedEKFsequenziale3step.m  descritto sopra, in cui le correzioni vengono fatte una alla volta, prima la posa del robot, poi le variabili comuni dei landmark e poi le diverse ipotesi dei landmark. Non ha dato risultati interessanti.
+e) FedEKFconPruningConKmistoSenzaDoppioni.m è la versione in cui si eliminano le ipotesi simili.
+f) FedEKFconPruningConKmistoSenzaDoppioniSwitch.m è come il precedente con la possibilità di interrompere a un certo passo la modulazione dell'IS e tornare al FedEKF normale.
+g) FedEKFconPruningConKmistoSenzaDoppioniCheckP.m serve per vedere la correlazione che si crea tra le ipotesi durante l'esecuzione del filtro, andando a scrivere la somma dei quadrati degli elementi fuori della diagonale principale della P di un landmark.
+h) FedEKFconPruningKmistoOneShot.m implementa il metodo evitando di correggere una variabile alla volta: molto veloce ma meno efficace.
+ALLA FINE la versione utilizzata è la FedEKFconPruningConKmistoSenzaDoppioni.m 
+
+ALTRI FILE:
+- dati.m definisce i dati;
+- percorsoRandom.m, che utilizza distanzaBordo.m, genera la traiettoria del robot e i vari errori di misura;
+- faiConfrontoXXX.m, sono vari script per confrontare i vari metodi;
+- main.m, se si indica quale metodo simulare, fa tutto da solo (invoca dati.m, percorsorandom.m e quindi il metodo da testare).

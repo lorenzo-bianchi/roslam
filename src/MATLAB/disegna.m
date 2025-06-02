@@ -47,7 +47,7 @@ for robot = 1:nRobot
             y_ti = y_ti + yTag_ij*ekfs(robot).pesi(indTag, indPhi);
             posLoc = [xTag_ij, yTag_ij, 1]';
             posGlob = TsGL{robot}(:, :, end)*posLoc;
-            plot(posGlob(1), posGlob(2), 'b.', 'MarkerSize', max(7, ceil(20*ekfs(robot).pesi(indTag,indPhi))))
+            plot(posGlob(1), posGlob(2), 'k-.', 'MarkerSize', max(7, ceil(20*ekfs(robot).pesi(indTag,indPhi))))
             text(posGlob(1) - 0.2, posGlob(2), num2str(indTag), 'FontSize', 12);
         end
         posLoc = [x_ti, y_ti, 1]';

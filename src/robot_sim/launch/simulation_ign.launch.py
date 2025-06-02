@@ -62,12 +62,20 @@ def generate_launch_description():
     )
   ld.add_action(parser)
 
-  robots_pos = [[-2.0, -0.5, 0.01, 0.0],
-                [ 2.0,  0.5, 0.01, 0.0],
-                [ 0.0, -1.0, 0.01, 1.57],]
-  colors = ['0.7 0.0 0.0',
-            '0.0 0.0 0.7',
-            '0.0 0.7 0.0']
+  pi = 3.141592653
+  robots_pos = [[0.08,  1.2, 0.01,  60*pi/180],
+                [1.59, 1.89, 0.01, -70*pi/180],
+                [1.33, 3.02, 0.01, 100*pi/180],
+                [0.52,  3.7, 0.01,  30*pi/180],
+                [0.84, 1.96, 0.01,  45*pi/180],
+                [0.85,  2.6, 0.01,  5*pi/180]]
+  colors = ['0.368 0.506 0.709',
+            '0.880 0.611 0.142',
+            '0.560 0.692 0.195',
+            '0.922 0.388 0.310',
+            '0.528 0.471 0.701',
+            '0.235 0.705 0.815']
+
   for i, pos in enumerate(robots_pos):
     robot_name = f'robot{i+1}'
 
@@ -164,24 +172,29 @@ def generate_launch_description():
     launch_arguments=[('gz_args', f' -r {world_only} -v3 ')])
   ld.add_action(gazebo_launch)
 
-  gz_spawn_walls = Node(
-    package='ros_gz_sim',
-    executable='create',
-    output='screen',
-    parameters=[params],
-    arguments=['-file', PathJoinSubstitution([
-                  get_package_share_directory('ro_slam_descriptions'),
-                  'models',
-                  'wall',
-                  'model.sdf']),
-               '-allow_renaming', 'false'],
-    )
-  ld.add_action(gz_spawn_walls)
+  # gz_spawn_walls = Node(
+  #   package='ros_gz_sim',
+  #   executable='create',
+  #   output='screen',
+  #   parameters=[params],
+  #   arguments=['-file', PathJoinSubstitution([
+  #                 get_package_share_directory('ro_slam_descriptions'),
+  #                 'models',
+  #                 'wall',
+  #                 'model.sdf']),
+  #              '-allow_renaming', 'false'],
+  #   )
+  # ld.add_action(gz_spawn_walls)
 
-  anchors = [[ 1.0,  1.0, 0.21],
-             [ 1.0, -1.0, 0.21],
-             [-1.0,  1.0, 0.21],
-             [-1.0, -1.0, 0.21]]
+  anchors = [[ 0.00, 0.00, 0.21],
+             [ 1.79, 0.00, 0.21],
+             [ 1.72, 3.69, 0.21],
+             [-0.15, 3.72, 0.21],
+             [ 2.10, 1.86, 0.21],
+             [ 0.75, 3.12, 0.21],
+             [-0.34, 2.20, 0.21],
+             [ 0.88, 1.24, 0.21]]
+
   for i, anchor in enumerate(anchors):
     gz_spawn_anchor = Node(
       package='ros_gz_sim',

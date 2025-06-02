@@ -1,0 +1,56 @@
+In tutte le matrici la prima colonna rappresenta in tempi a cui sono arrivati i dati.
+Le odometrie dei robot sono in metri e la seconda colonna è la ruota destra, mentre la terza colonna è la sinistra.
+
+Di seguito alcuni dati utili che poi ingloberò nel file mat:
+
+- Posizioni ancore note (sdr globale centrato sull'ancora 1 con l'asse x verso l'ancora 2:
+
+      0, 0
+      1.7903, 0
+      1.7241, 3.6934
+      -0.1471, 3.7211
+
+- Posizioni iniziali robot (x, y, theta):
+
+      0.0905, 2.6885, 0
+      0.0605, 1.6437, -pi/2
+      1.7309, 0.7688, pi/2
+
+- Distanze finali dalle ancore:
+
+      1.14, 2.27, 3.20, 2.59
+      2.05, 2.01, 2.02, 2.21
+      2.59, 2.59, 1.52, 1.68
+
+- Distanze finali tra i robot: d12 = 1.35, d13 = 1.7, d23 = 0.61
+
+- nPassi: 
+	R1 --> 1683
+	R2 --> 1675
+	R3 --> 1675
+  Prendo nPassi = 1675
+
+- nMisure:
+	R1-Lj: 836 tra loro sovrapposti
+	R2-Lj: 827 tra loro sovrapposti
+	R3-Lj: 827 sovrapposti tra loro e con i precedenti
+	R1-R2: 833
+	R1-R3: 833 come il precedente
+	R2-R3: 828
+  Prendo nMisure = 827
+  Quindi:
+
+tempiMisureR1Lj = tempiMisure(10:end);
+tempiMisureR2Lj = tempiMisure;
+tempiMisureR3Lj = tempiMisure;
+tempiMisureR1R2 = tempiMisure(7:end);
+tempiMisureR1R3 = tempiMisure(7:end);
+tempiMisureR2R3 = tempiMisure(2:end);
+
+e lo stesso va fatto coi vettori delle misure (ho già verificato che non capitano NaN).
+
+In realtà conviene partire dal passo 12, in quanto tempi(12) ~= tempiMisure(1)
+
+Quindi partendo da 12 nPassi sarà 1675-11=1664. Però avendo solo 827 misure, conviene mettere 
+
+*****nPassi = 827*2 = 1654 
